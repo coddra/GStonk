@@ -778,33 +778,9 @@ const opcDef OPS[] = {
     },
 
     { OPFLAGS,
-        ".flgs", ".flags",
+        "##", ".flags",
         0, 1,
         "\tpushfq\n",
-        FGENERIC | FIMMEDIATE,
-        FNONE
-    },
-
-    { OPVERR,
-        "?->", ".verr",
-        1, 1,
-        "\tpopq\t\t%rbx\n"
-        "\txorl\t\t%eax, %eax\n"
-        "\tverr\t\t%rbx\n"
-        "\tsetzq\t\t%rax\n"
-        "\tpushq\t\t%rax\n",
-        FGENERIC | FIMMEDIATE,
-        FNONE
-    },
-
-    { OPVERW,
-        "->?", ".verw",
-        1, 1,
-        "\tpopq\t\t%rbx\n"
-        "\txorl\t\t%eax, %eax\n"
-        "\tverw\t\t%rbx\n"
-        "\tsetzq\t\t%rax\n"
-        "\tpushq\t\t%rax\n",
         FGENERIC | FIMMEDIATE,
         FNONE
     },

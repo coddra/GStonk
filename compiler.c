@@ -2,7 +2,7 @@
 #include "h/opcodes.h"
 #include "h/linker.h"
 
-string compOP(context* c, opc* op, u f) {
+static string compOP(context* c, opc* op, u f) {
     string res = stringDefault();
     addCptr(&res, ".addr");
     addCptr(&res, utos(c->addr++));
@@ -293,7 +293,7 @@ string compOP(context* c, opc* op, u f) {
     }
     return res;
 }
-string compFun(context* c, u f) {
+static string compFun(context* c, u f) {
     string res = stringDefault();
     addCptr(&res, ".globl ");
     stringAddRange(&res, c->funs.items[f].name.csign);
@@ -313,7 +313,7 @@ string compFun(context* c, u f) {
         stringAddRange(&res, compOP(c, c->funs.items[f].body.items[i], f));
     return res;
 }
-string compGlb(context* c, u g) {
+static string compGlb(context* c, u g) {
     string res = stringDefault();
     addCptr(&res, ".globl\t");
     stringAddRange(&res, c->glbs.items[g].name.csign);
@@ -327,7 +327,7 @@ string compGlb(context* c, u g) {
     stringAdd(&res, '\n');
     return res;
 }
-string compStr(context* c, u s) {
+static string compStr(context* c, u s) {
     string res = stringDefault();
     addCptr(&res, ".str");
     addCptr(&res, utos(s));

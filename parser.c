@@ -3,13 +3,17 @@
 #include "h/linker.h"
 #include "h/opcodes.h"
 
+setDeclareDefault(char);
 setDefineDefault(char);
 setDefineVaListInt(char);
+static bool parseHead(context* c, list(opcPtr)* res, u r);
+static bool parseBody(context* c, list(opcPtr)* res, u r);
 
 set(char)* whitespace = NULL;
 set(char)* letters = NULL;
 set(char)* digits = NULL;
 set(char)* hexDigits = NULL;
+set(char)* octDigits = NULL;
 set(char)* specialChars = NULL;
 set(char)* escChars = NULL;
 set(char)* newLine = NULL;
@@ -27,6 +31,7 @@ void init(PARSER) {
     letters = charSetAdd(charRangeNew('a', 'z'), charRangeNew('A', 'Z'));
     digits = charRangeNew('0', '9');
     hexDigits = charSetAdd(charSetAdd(charRangeNew('0', '9'), charRangeNew('a', 'f')), charRangeNew('A', 'F'));
+    octDigits = charRangeNew('0', '7');
     specialChars = charAggregateFromArray("_<>", 3);
     escChars = charAggregateFromArray("abfnrtv\'\"\\?", 11);
     newLine = charAggregateFromVaList(1, '\n');//preprocessor will normalize line endings
@@ -38,7 +43,7 @@ void init(PARSER) {
     modifiers = charAggregateFromArray("-`#", 3);
 }
 
-bool next(context* c) {
+static bool next(context* c) {
     if (c->loc.cr >= c->text.len)
         return false;
     if (c->text.items[c->loc.cr] == '\n') {
@@ -51,7 +56,7 @@ bool next(context* c) {
     c->loc.cr++;
     return true;
 }
-bool prev(context* c) {
+static bool prev(context* c) {
     if (c->loc.cr == 0 || c->text.items[c->loc.cr - 1] == '\n')
         return false;
     c->loc.cr--;
@@ -61,35 +66,36 @@ bool prev(context* c) {
         c->loc.cl--;
     return true;
 }
-bool eof(context* c) {
+static inline bool eof(context* c) {
     return c->text.len >= c->loc.cr;
 }
-bool neof(context* c) {
+static inline bool neof(context* c) {
     return c->loc.cr < c->text.len;
 }
-bool parseC(context* c, char ch) {
+static inline bool parseC(context* c, char ch) {
     return neof(c) && c->text.items[c->loc.cr] == ch && next(c);
 }
-bool parseCS(context* c, set(char)* cs) {
+static inline bool parseCS(context* c, set(char)* cs) {
     return neof(c) && charSetContains(cs, c->text.items[c->loc.cr]) && next(c);
 }
-bool parseCSR(context* c, set(char)* cs, char* res) {
-    *res = c->text.items[c->loc.cr];
+static inline bool parseCSR(context* c, set(char)* cs, char* res) {
+    if (res)
+        *res = c->text.items[c->loc.cr];
     return neof(c) && charSetContains(cs, c->text.items[c->loc.cr]) && next(c);
 }
-bool parseAllCS(context* c, set(char)* cs) {
+static inline bool parseAllCS(context* c, set(char)* cs) {
     bool res = false;
     while (neof(c) && charSetContains(cs, c->text.items[c->loc.cr]) && next(c))
         res = true;
     return res;
 }
-bool parseAllNot(context* c, set(char)* cs) {
+static inline bool parseAllNot(context* c, set(char)* cs) {
     bool res = false;
     while (neof(c) && !charSetContains(cs, c->text.items[c->loc.cr]) && next(c))
         res = true;
     return res;
 }
-bool parseCptr(context* c, char* s) {
+static bool parseCptr(context* c, char* s) {
     loc o = c->loc;
     u i = 0;
     while (neof(c) && s[i] != 0 && c->text.items[c->loc.cr] == s[i] && next(c))
@@ -100,20 +106,20 @@ bool parseCptr(context* c, char* s) {
     return false;
 }
 
-bool lookingAtC(context* c, char ch) {
+static inline bool lookingAtC(context* c, char ch) {
     return neof(c) && c->text.items[c->loc.cr] == ch;
 }
-bool nlookingAtC(context* c, char ch) {
+static inline bool nlookingAtC(context* c, char ch) {
     return neof(c) && !(c->text.items[c->loc.cr] == ch);
 }
-bool lookingAtCS(context* c, set(char)* cs) {
+static inline bool lookingAtCS(context* c, set(char)* cs) {
     return neof(c) && charSetContains(cs, c->text.items[c->loc.cr]);
 }
-bool nlookingAtCS(context* c, set(char)* cs) {
+static inline bool nlookingAtCS(context* c, set(char)* cs) {
     return neof(c) && !charSetContains(cs, c->text.items[c->loc.cr]);
 }
 
-bool parseHex(context* c, u64* res, u8 digits) {
+static bool parseHex(context* c, u64* res, u8 digits) {
     loc o = c->loc;
     if (digits == 0){
         if (!parseAllCS(c, hexDigits))
@@ -128,7 +134,7 @@ bool parseHex(context* c, u64* res, u8 digits) {
         *res = strtoul(cptrify(stringGetRange(c->text, o.cr, c->loc.cr - o.cr)), NULL, 16);
     return true;
 }
-bool parseES(context* c, char* res) {
+static bool parseES(context* c, char* res) {
     loc o = c->loc;
     if (!parseC(c, '\\'))
         return false;
@@ -147,15 +153,13 @@ bool parseES(context* c, char* res) {
         addDgn(c, EUNRECESCSEQ, cptrify(codeFrom(c, o)));
     return true;
 }
-bool parseCC(context* c, char* res, bool str) {
-    return parseES(c, res) || parseCSR(c, str ? stringLiteral: charLiteral, res);
+static inline bool parseCC(context* c, char* res, bool str) {
+    return parseES(c, res) || parseCSR(c, str ? stringLiteral : charLiteral, res);
 }
-bool parseCL(context* c, char* res) {
-    if (parseC(c, '\'') && parseCC(c, res, false) && parseC(c, '\''))
-        return true;
-    return false;
+static inline bool parseCL(context* c, char* res) {
+    return parseC(c, '\'') && parseCC(c, res, false) && parseC(c, '\'');
 }
-bool parseIL(context* c, i64* res) {
+static bool parseIL(context* c, i64* res) {
     loc o = c->loc;
     parseC(c, '-');
     if (!parseAllCS(c, digits)) {
@@ -166,21 +170,35 @@ bool parseIL(context* c, i64* res) {
         *res = strtol(cptrify(stringGetRange(c->text, o.cr, c->loc.cr - o.cr)), NULL, 10);
     return true;
 }
-bool parseUL(context* c, u64* res) {
+static bool parseUL(context* c, u64* res) {
     loc o = c->loc;
-    if (!parseAllCS(c, digits)) {
-        if (parseC(c, '0') && (parseC(c, 'x') || parseC(c, 'X')) && parseHex(c, res, 0))
+    if (parseC(c, '0')) {
+        if (parseC(c, 'x') || parseC(c, 'X')) {
+            if (!parseHex(c, res, 0))
+                addDgn(c, EMISSINGSYNTAX, "value of hexadecimal number");
             return true;
-        else {
-            c->loc = o;
-            return false;
+        } else {
+            o = c->loc;
+            if (parseAllCS(c, octDigits)) {
+                if (res)
+                    *res = strtoul(cptrify(codeFrom(c, o)), NULL, 8);
+                return true;
+            } else {
+                if (res)
+                    *res = 0;
+                return true;
+            }
         }
-    }
-    if (res)
-        *res = strtoul(cptrify(stringGetRange(c->text, o.cr, c->loc.cr - o.cr)), NULL, 10);
-    return true;
+    } else if (parseAllCS(c, digits)) {
+        if (res)
+            *res = strtoul(cptrify(codeFrom(c, o)), NULL, 10);
+        return true;
+    } else if (parseCL(c, (char*)res))
+        return true;
+    else
+        return false;
 }
-bool parseDL(context* c, d* res) {
+static bool parseDL(context* c, d* res) {
     loc o = c->loc;
     parseC(c, '-');
     if (!parseAllCS(c, digits) || !parseC(c, '.') || !parseAllCS(c, digits)) {
@@ -191,7 +209,7 @@ bool parseDL(context* c, d* res) {
         *res = strtod(cptrify(stringGetRange(c->text, o.cr, c->loc.cr - o.cr)), NULL);
     return true;
 }
-bool parseSL(context* c, ref* res) {
+static bool parseSL(context* c, ref* res) {
     string s = stringDefault();
     if (!parseC(c, '"'))
         return false;
@@ -215,7 +233,7 @@ bool parseSL(context* c, ref* res) {
     return true;
 }
 
-bool parseName(context* c, name* res) {
+static bool parseName(context* c, name* res) {
     if (res)
         res->loc = c->loc;
     if (!parseCS(c, specialChars) && !parseCS(c, letters))
@@ -225,7 +243,7 @@ bool parseName(context* c, name* res) {
         res->sign = stringGetRange(c->text, res->loc.cr, c->loc.cr - res->loc.cr);
     return true;
 }
-bool parseIdfr(context* c, name* res) {
+static bool parseIdfr(context* c, name* res) {
     if (res)
         res->loc = c->loc;
     if (!parseName(c, NULL))
@@ -240,10 +258,10 @@ bool parseIdfr(context* c, name* res) {
     return true;
 }
 
-bool parseTypIdfr(context* c, name* res) {
+static inline bool parseTypIdfr(context* c, name* res) {
     return parseIdfr(c, res);
 }
-bool parseTypList(context* c, string* res, list(ref) *refs) {
+static bool parseTypList(context* c, string* res, list(ref) *refs) {
     name n = nameDefault();
     if (!parseTypIdfr(c, &n))
         return false;
@@ -273,7 +291,7 @@ bool parseTypList(context* c, string* res, list(ref) *refs) {
     }
     return true;
 }
-bool parseFunIdfr(context* c, name* res) {
+static bool parseFunIdfr(context* c, name* res) {
     if (!parseIdfr(c, res))
         return false;
     name n = nameDefault();
@@ -300,7 +318,7 @@ bool parseFunIdfr(context* c, name* res) {
         stringAddRange(&res->sign, n.sign);
     return true;
 }
-bool parseVarIdfr(context* c, name* res) {
+static bool parseVarIdfr(context* c, name* res) {
     if (!parseIdfr(c, res))
         return false;
     if (res) {
@@ -317,7 +335,7 @@ bool parseVarIdfr(context* c, name* res) {
     return true;
 }
 
-bool parseFun(context* c, ref* res) {
+static bool parseFun(context* c, ref* res) {
     if (res)
         res->loc = c->loc;
     name n = nameDefault();
@@ -329,7 +347,7 @@ bool parseFun(context* c, ref* res) {
         return false;
     return true;
 }
-bool parseTyp(context* c, ref* res) {
+static bool parseTyp(context* c, ref* res) {
     if (res)
         res->loc = c->loc;
     name n = nameDefault();
@@ -342,7 +360,7 @@ bool parseTyp(context* c, ref* res) {
         return false;
     return true;
 }
-bool parseGlb(context* c, ref* res) {
+static bool parseGlb(context* c, ref* res) {
     if (res)
         res->loc = c->loc;
     name n = nameDefault();
@@ -354,7 +372,7 @@ bool parseGlb(context* c, ref* res) {
         return false;
     return true;
 }
-bool parseVar(context* c, ref* res, list(varDef)* l) {
+static bool parseVar(context* c, ref* res, list(varDef)* l) {
     name n = nameDefault();
     if (!parseVarIdfr(c, &n))
         return false;
@@ -364,7 +382,7 @@ bool parseVar(context* c, ref* res, list(varDef)* l) {
     }
     return true;
 }
-bool parsePar(context* c, par* res, AFLAG kind, u r) {
+static bool parsePar(context* c, par* res, AFLAG kind, u r) {
     res->loc = c->loc;
     if ((kind & FFUN) > 0 && parseFun(c, &res->val.r))
         res->kind = KFUN;
@@ -410,7 +428,7 @@ bool parsePar(context* c, par* res, AFLAG kind, u r) {
     return true;
 }
 
-bool parseAtt(context* c, att* res) {
+static bool parseAtt(context* c, att* res) {
     res->loc = c->loc;
     if (!parseAllCS(c, letters))
         return false;
@@ -429,7 +447,7 @@ bool parseAtt(context* c, att* res) {
         addDgn(c, EMISSINGTOKEN, ")");
     return true;
 }
-bool parseAttList(context* c, list(att)* res) {
+static bool parseAttList(context* c, list(att)* res) {
     if (!parseC(c, '['))
         return false;
     parseAllCS(c, whitespace);
@@ -449,7 +467,7 @@ bool parseAttList(context* c, list(att)* res) {
     return true;
 }
 
-bool parseVarDef(context* c, varDef* res) {
+static bool parseVarDef(context* c, varDef* res) {
     if (!parseIdfr(c, &res->name))
         return false;
     if (!parseCptr(c, "::"))
@@ -467,7 +485,7 @@ bool parseVarDef(context* c, varDef* res) {
     parseAttList(c, &res->attrs);
     return true;
 }
-bool parseVarList(context* c, list(varDef)* res) {
+static bool parseVarList(context* c, list(varDef)* res) {
     loc o = c->loc;
     if (!parseC(c, '('))
         return false;
@@ -495,10 +513,10 @@ bool parseVarList(context* c, list(varDef)* res) {
     return c->loc.cr != o.cr;
 }
 
-bool parseOP(context* c, OP op) {
+static inline bool parseOP(context* c, OP op) {
     return parseCptr(c, OPS[op].code) || parseCptr(c, OPS[op].alias);
 }
-bool parseOPC(context* c, opc** res, u r) {
+static bool parseOPC(context* c, opc** res, u r) {
     loc o = c->loc;
     if (!parseC(c, '.') || !parseAllCS(c, letters))
             parseAllCS(c, opSymbols);
@@ -596,7 +614,7 @@ bool parseOPC(context* c, opc** res, u r) {
     }
     return s.len != 0 || as(popc, *res)->par.kind != KNONE;
 }
-bool parseHead(context* c, list(opcPtr)* res, u r) {
+static bool parseHead(context* c, list(opcPtr)* res, u r) {
     opc* op;
     *res = opcPtrListDefault();
     if (!parseOPC(c, &op, r))
@@ -609,7 +627,7 @@ bool parseHead(context* c, list(opcPtr)* res, u r) {
     }
     return true;
 }
-bool parseBody(context* c, list(opcPtr)* res, u r) {
+static bool parseBody(context* c, list(opcPtr)* res, u r) {
     if (!parseC(c, '{'))
         return false;
     parseAllCS(c, whitespace);
@@ -619,7 +637,7 @@ bool parseBody(context* c, list(opcPtr)* res, u r) {
     return true;
 }
 
-bool parseGlbDef(context* c) {
+static bool parseGlbDef(context* c) {
     if (!parseCptr(c, "[]"))
         return false;
     varDef v = varDefDefault();
@@ -635,7 +653,7 @@ bool parseGlbDef(context* c) {
     }
     return true;
 }
-bool parseTypDef(context* c) {
+static bool parseTypDef(context* c) {
     if (!parseCptr(c, "::"))
         return false;
     name n = nameDefault();
@@ -679,7 +697,7 @@ bool parseTypDef(context* c) {
     c->typs.items[r].flags |= FDEFINED;
     return true;
 }
-bool parseFunDef(context* c) {
+static bool parseFunDef(context* c) {
     if (!parseCptr(c, "()"))
         return false;
     name n = nameDefault();

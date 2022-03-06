@@ -17,12 +17,6 @@ u getVar(list(varDef)* l, string sign, bool r);
 
 bool isGOP(context* c, string code, par* pars, OP* op);
 
-void linkAtt(context* c, list(att) atts);
-void linkVar(context* c, list(varDef) vars);
-void linkTyp(context* c, list(typDef) typs);
-void linkTypList(context* c, list(ref) typs);
-i64 linkBody(context* c, list(opcPtr) b, u f, i64 s);
-void linkFun(context* c, list(funDef) funs);
 void link(context* c);
 
 #endif //LINKER_H

@@ -119,7 +119,7 @@ bool isGOP(context* c, string code, par* pars, OP* op) {
     return false;
 }
 
-void linkAtt(context* c, list(att) atts) {
+static void linkAtt(context* c, list(att) atts) {
     static list(u) ul = {0};
     if (ul.cap == 0)
         ul = uListDefault();
@@ -135,8 +135,8 @@ void linkAtt(context* c, list(att) atts) {
         atts.items[i].flags |= FLINKED;
     }
 }
-void linkVar(context* c, list(varDef) vars) {
-    i64 lastDef = -1;
+static void linkVar(context* c, list(varDef) vars) {
+    static i64 lastDef = -1;
     for (u i = 0 ; i < vars.len; i++)
         if (vars.items[i].flags & FDEFINED) {
             if ((c->typs.items[vars.items[i].type.i].flags & FDEFINED) == 0)
@@ -151,7 +151,7 @@ void linkVar(context* c, list(varDef) vars) {
             vars.items[i].flags |= FLINKED;
         }
 }
-void linkTyp(context* c, list(typDef) typs) {
+static void linkTyp(context* c, list(typDef) typs) {
     for (u i = 0; i < typs.len; i++)
         if (typs.items[i].flags & FDEFINED) {
             linkAtt(c, typs.items[i].attrs);
@@ -160,12 +160,12 @@ void linkTyp(context* c, list(typDef) typs) {
             typs.items[i].flags |= FLINKED;
         }
 }
-void linkTypList(context* c, list(ref) typs) {
+static void linkTypList(context* c, list(ref) typs) {
     for (u i = 0; i < typs.len; i++)
         if ((c->typs.items[typs.items[i].i].flags & FDEFINED) == 0)
             addDgnLoc(c, EDEFNOTFOUND, typs.items[i].loc, cptrify(c->typs.items[typs.items[i].i].name.sign));
 }
-i64 linkBody(context* c, list(opcPtr) b, u f, i64 s) {
+static i64 linkBody(context* c, list(opcPtr) b, u f, i64 s) {
     for (u i = 0; i < b.len; i++)
         if (is(popc, b.items[i])) {
             if (b.items[i]->op == OPLDAT) {
@@ -218,7 +218,7 @@ i64 linkBody(context* c, list(opcPtr) b, u f, i64 s) {
             }
             s += as(popc, b.items[i])->retc;
         } else if (is(bopc, b.items[i])) {
-            i64 h;
+            static i64 h;
             if (b.items[i]->op == OPIF || b.items[i]->op == OPWHILE) {
                 h = linkBody(c, as(bopc, b.items[i])->head, f, s) - s;
                 s += h;
@@ -259,7 +259,7 @@ i64 linkBody(context* c, list(opcPtr) b, u f, i64 s) {
         }
     return s;
 }
-void linkFun(context* c, list(funDef) funs) {
+static void linkFun(context* c, list(funDef) funs) {
     for (u i = 0; i < funs.len; i++)
         if (funs.items[i].flags & FDEFINED) {
             linkAtt(c, funs.items[i].attrs);
