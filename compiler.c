@@ -1,4 +1,6 @@
-#include "h/compiling.h"
+#include "h/compiler.h"
+#include "h/opcodes.h"
+#include "h/linker.h"
 
 string compOP(context* c, opc* op, u f) {
     string res = stringDefault();

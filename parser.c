@@ -1,4 +1,7 @@
-#include "h/parsing.h"
+#include "h/parser.h"
+#include "h/preprocessor.h"
+#include "h/linker.h"
+#include "h/opcodes.h"
 
 setDefineDefault(char);
 setDefineVaListInt(char);
@@ -15,23 +18,24 @@ set(char)* stringLiteral = NULL;
 set(char)* charLiteral = NULL;
 set(char)* notWhitespace = NULL;
 set(char)* opSymbols = NULL;
+set(char)* modifiers = NULL;
 
 const int tabWidth = 4;
-static const ref NOREF = {0};
 
-void init(PARSING) {
-    whitespace = charAggregateFromVaList(4, ' ', '\t', '\n', '\r');
+void init(PARSER) {
+    whitespace = charAggregateFromArray(" \t\n", 3);
     letters = charSetAdd(charRangeNew('a', 'z'), charRangeNew('A', 'Z'));
     digits = charRangeNew('0', '9');
-    hexDigits = charSetAdd(charSetAdd(charRangeNew('0', '9'), charRangeNew('a', 'f')), charRangeNew('A', 'Z'));
-    specialChars = charAggregateFromVaList(3, '_', '<', '>');
-    escChars = charAggregateFromVaList(11, 'a', 'b', 'f', 'n', 'r', 't', 'v', '\'', '"', '\\', '?');
+    hexDigits = charSetAdd(charSetAdd(charRangeNew('0', '9'), charRangeNew('a', 'f')), charRangeNew('A', 'F'));
+    specialChars = charAggregateFromArray("_<>", 3);
+    escChars = charAggregateFromArray("abfnrtv\'\"\\?", 11);
     newLine = charAggregateFromVaList(1, '\n');//preprocessor will normalize line endings
-    stringCloser = charSetAdd(newLine, charAggregateFromVaList(1, '\"'));
-    stringLiteral = charSetComplement(charSetAdd(newLine, charAggregateFromVaList(2, '\\', '\"')));
-    charLiteral = charSetComplement(charSetAdd(newLine, charAggregateFromVaList(2, '\\', '\'')));
+    stringCloser = charAggregateFromArray("\"\n", 2);
+    stringLiteral = charSetComplement(charAggregateFromArray("\n\\\"", 3));
+    charLiteral = charSetComplement(charAggregateFromArray("\n\\\'", 3));
     notWhitespace = charSetComplement(whitespace);
-    opSymbols = charAggregateFromVaList(25, '~', '!', '@', '$', '%', '^', '&', '*', '(', ')', '-', '_', '=', '+', '\\', '|', ':', ';', ',', '<', '.', '>', '/', '?');
+    opSymbols = charAggregateFromArray("~!@$%^&*()-_=+\\|:;,<.>/?`#", 27);
+    modifiers = charAggregateFromArray("-`#", 3);
 }
 
 bool next(context* c) {
@@ -45,6 +49,16 @@ bool next(context* c) {
     else
         c->loc.cl++;
     c->loc.cr++;
+    return true;
+}
+bool prev(context* c) {
+    if (c->loc.cr == 0 || c->text.items[c->loc.cr - 1] == '\n')
+        return false;
+    c->loc.cr--;
+    if (c->text.items[c->loc.cr] == '\t')
+        c->loc.cl -= tabWidth;
+    else
+        c->loc.cl--;
     return true;
 }
 bool eof(context* c) {
@@ -101,7 +115,7 @@ bool nlookingAtCS(context* c, set(char)* cs) {
 
 bool parseHex(context* c, u64* res, u8 digits) {
     loc o = c->loc;
-    if (digits < 0){
+    if (digits == 0){
         if (!parseAllCS(c, hexDigits))
             return false;
     } else
@@ -137,7 +151,6 @@ bool parseCC(context* c, char* res, bool str) {
     return parseES(c, res) || parseCSR(c, str ? stringLiteral: charLiteral, res);
 }
 bool parseCL(context* c, char* res) {
-    loc o = c->loc;
     if (parseC(c, '\'') && parseCC(c, res, false) && parseC(c, '\''))
         return true;
     return false;
@@ -352,7 +365,6 @@ bool parseVar(context* c, ref* res, list(varDef)* l) {
     return true;
 }
 bool parsePar(context* c, par* res, AFLAG kind, u r) {
-    string s = stringDefault();
     res->loc = c->loc;
     if ((kind & FFUN) > 0 && parseFun(c, &res->val.r))
         res->kind = KFUN;
@@ -371,15 +383,15 @@ bool parsePar(context* c, par* res, AFLAG kind, u r) {
         res->val.r.loc = c->loc;
         if (!parseUL(c, &res->val.r.i) && !parseVar(c, &res->val.r, &c->funs.items[r].locs))
             addDgn(c, EMISSINGSYNTAX, "index or name of local variable");
-        if (res->val.r.i >= c->funs.items[r].locs.len)
+        if (res->val.r.i >= c->funs.items[r].locs.len || (c->funs.items[r].locs.items[res->val.r.i].flags & FDEFINED) == 0)
             addDgn(c, EARGOUTOFRANGE, "local variable number");
         c->funs.items[r].locs.items[res->val.r.i].flags |= FREFERENCED;
         res->kind = KLOC;
     } else if ((kind & FARG) > 0 && parseC(c, '#')) {
         res->val.r.loc = c->loc;
-        if (!parseUL(c, &res->val.r.i) && !parseVar(c, &res->val.r, &c->funs.items[r].args))
+        if (!(parseUL(c, &res->val.r.i) || parseVar(c, &res->val.r, &c->funs.items[r].args)))
             addDgn(c, EMISSINGSYNTAX, "index or name of argument");
-        if (res->val.r.i >= c->funs.items[r].args.len)
+        if (res->val.r.i >= c->funs.items[r].args.len || (c->funs.items[r].args.items[res->val.r.i].flags & FDEFINED) == 0)
             addDgn(c, EARGOUTOFRANGE, "argument number");
         c->funs.items[r].args.items[res->val.r.i].flags |= FREFERENCED;
         res->kind = KARG;
@@ -391,12 +403,15 @@ bool parsePar(context* c, par* res, AFLAG kind, u r) {
         res->kind = KINT;
     else if ((kind & FSTR) > 0 && parseSL(c, &res->val.r))
         res->kind = KSTR;
-    else return false;
+    else {
+        res->kind = KNONE;
+        return false;
+    }
     return true;
 }
 
 bool parseAtt(context* c, att* res) {
-    res->loc = c->loc;//FIXME: code from
+    res->loc = c->loc;
     if (!parseAllCS(c, letters))
         return false;
     res->kind = getAtt(codeFrom(c, res->loc));
@@ -420,7 +435,6 @@ bool parseAttList(context* c, list(att)* res) {
     parseAllCS(c, whitespace);
     att a = attDefault();
     bool commaflag = true;
-    loc com = locDefault();
     while (parseAtt(c, &a)) {
         attListAdd(res, a);
         if (!commaflag)
@@ -450,8 +464,7 @@ bool parseVarDef(context* c, varDef* res) {
     res->type.i = getTyp(c, n.sign, true);
     res->flags = FDEFINED;
     parseAllCS(c, whitespace);
-    if (parseAttList(c, &res->attrs))
-        parseAllCS(c, whitespace);
+    parseAttList(c, &res->attrs);
     return true;
 }
 bool parseVarList(context* c, list(varDef)* res) {
@@ -487,11 +500,21 @@ bool parseOP(context* c, OP op) {
 }
 bool parseOPC(context* c, opc** res, u r) {
     loc o = c->loc;
-    if (!(parseC(c, '.') && parseAllCS(c, letters)))
-        parseAllCS(c, opSymbols);
+    if (!parseC(c, '.') || !parseAllCS(c, letters))
+            parseAllCS(c, opSymbols);
+    loc p = c->loc;
+    if (charSetContains(modifiers, c->text.items[c->loc.cr - 1]) && parseUL(c, NULL)) {
+        c->loc = p;
+        prev(c);
+    }
     string s = codeFrom(c, o);
+    if (s.len > 0 && charSetContains(letters, s.items[s.len - 1]))
+        parseC(c, '.');
+    par pars[2] = { 0 };
+    if (!parsePar(c, pars, FANY, r) && s.len == 0)
+        return false;
     OP op;
-    if (isGOP(s, &op)) {
+    if (isGOP(c, s, pars, &op)) {
         if (OPS[op].arg == FNONE) {
             *res = new(opc);
             (*res)->loc = o;
@@ -502,14 +525,8 @@ bool parseOPC(context* c, opc** res, u r) {
             (*res)->op = op;
             as(popc, *res)->argc = OPS[op].argc;
             as(popc, *res)->retc = OPS[op].retc;
-            parseAllCS(c, whitespace);
-            if (!parsePar(c, &as(popc, *res)->par, OPS[op].arg, r)) {
-                if (s.len == 0) {
-                    free(*res);
-                    return false;
-                } else
-                    addDgn(c, EMISSINGSYNTAX, "compiletime parameter of operation code");
-            }
+            as(popc, *res)->par = pars[0];
+            as(popc, *res)->par2 = pars[1];
             if (as(popc, *res)->par.kind == KFLD)
                 as(popc, *res)->argc++;
         }
@@ -521,19 +538,19 @@ bool parseOPC(context* c, opc** res, u r) {
         (*res)->loc = o;
         (*res)->op = op;
         as(popc, *res)->argc = c->funs.items[r].ret.len;
+        as(popc, *res)->retc = 0;
     } else if (op == OPCLAT) {
         *res = as(opc, new(popc));
         (*res)->loc = o;
         (*res)->op = op;
-        if (!parsePar(c, &as(popc, *res)->par, FUINT, 0))
-            addDgn(c, EMISSINGSYNTAX, "argument count of function");
+        as(popc, *res)->par = pars[0];
         if (as(popc, *res)->par.val.u > max(u16))
             addDgnLoc(c, EARGOUTOFRANGE, (*res)->loc, "argument count cannot be greater than 65536");
         else
             as(popc, *res)->argc = as(popc, *res)->par.val.u;
         if (!parseCptr(c, "::"))
             addDgn(c, EMISSINGTOKEN, "::");
-        if (!parsePar(c, &as(popc, *res)->par2, FUINT, 0))
+        if (!parsePar(c, &as(popc, *res)->par2, FUINT, r))
             addDgn(c, EMISSINGSYNTAX, "return count of function");
         if (as(popc, *res)->par.val.u > max(u16))
             addDgnLoc(c, EARGOUTOFRANGE, (*res)->loc, "return count cannot be greater than 65536");
@@ -580,16 +597,14 @@ bool parseOPC(context* c, opc** res, u r) {
     return s.len != 0 || as(popc, *res)->par.kind != KNONE;
 }
 bool parseHead(context* c, list(opcPtr)* res, u r) {
-    opc* op = NULL;
+    opc* op;
     *res = opcPtrListDefault();
     if (!parseOPC(c, &op, r))
         return false;
     opcPtrListAdd(res, op);
-    op = NULL;
     parseAllCS(c, whitespace);
     while (parseOPC(c, &op, r)) {
         opcPtrListAdd(res, op);
-        op = NULL;
         parseAllCS(c, whitespace);
     }
     return true;
@@ -726,6 +741,7 @@ void parse(context* c) {
         c->loc.cl = 0;
         c->loc.ln = 1;
         c->loc.cr = 0;
+        preprocess(c);
         while(neof(c)) {
             parseAllCS(c, whitespace);
             if (!(parseFunDef(c) || parseTypDef(c) || parseGlbDef(c))) {
@@ -735,4 +751,5 @@ void parse(context* c) {
             }
         }
     }
+    c->loc.file.len = 0;
 }

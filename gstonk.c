@@ -1,8 +1,8 @@
 #include "h/shorts.h"
 #include "h/objects.h"
-#include "h/parsing.h"
-#include "h/linking.h"
-#include "h/compiling.h"
+#include "h/parser.h"
+#include "h/linker.h"
+#include "h/compiler.h"
 char* OFLAG = "-o";
 char* WFLAG = "-w";
 char* WOFF = "woff";
@@ -43,7 +43,7 @@ void exitOnError(context* c) {
 }
 
 int main(int argc, char** args) {
-    init(PARSING);
+    init(PARSER);
     context c = contextDefault();
     list(string) ars = stringListDefault();
     for (u i = 1; i < argc; i++)

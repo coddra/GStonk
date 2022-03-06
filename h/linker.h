@@ -1,6 +1,6 @@
-#ifndef LINKING_H
-#define LINKING_H
-#include "opcodes.h"
+#ifndef LINKER_H
+#define LINKER_H
+#include "objects.h"
 #include <string.h>
 
 string getCsign(string sign);
@@ -15,7 +15,7 @@ u getGlb(context* c, string sign, bool r);
 ATTKIND getAtt(string sign);
 u getVar(list(varDef)* l, string sign, bool r);
 
-bool isGOP(string code, OP* op);
+bool isGOP(context* c, string code, par* pars, OP* op);
 
 void linkAtt(context* c, list(att) atts);
 void linkVar(context* c, list(varDef) vars);
@@ -25,4 +25,4 @@ i64 linkBody(context* c, list(opcPtr) b, u f, i64 s);
 void linkFun(context* c, list(funDef) funs);
 void link(context* c);
 
-#endif //LINKING_H
+#endif //LINKER_H

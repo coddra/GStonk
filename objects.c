@@ -18,7 +18,7 @@ const diagnDescr EMISSINGTOKEN = { "emistok", "missing token '{0}'", LVLERROR };
 const diagnDescr EMISSINGSYNTAX = { "emissyn", "missing {0}", LVLERROR };
 const diagnDescr EUNRECESCSEQ = { "eunrece", "unrecognized escapesequence '{0}'", LVLERROR };
 const diagnDescr ESECONDDECLARATION = { "esecdec", "second declaration of '{0}' found", LVLERROR };
-const diagnDescr EARGOUTOFRANGE = { "eargout", "argument out of range", LVLERROR };
+const diagnDescr EARGOUTOFRANGE = { "eargout", "{0} out of range", LVLERROR };
 const diagnDescr EUNRECTOKEN = { "eunrect", "unrecognized token '{0}'", LVLERROR };
 const diagnDescr EDEFNOTFOUND = { "edefnof", "definition of '{0}' not found", LVLERROR };
 const diagnDescr EWRONGNUMOFPARAMS = { "ewrnump", "wrong number of parameters provided for '{0}'", LVLERROR };
@@ -30,14 +30,16 @@ const diagnDescr ESTACKLOW = { "estackl", "not enough arguments", LVLERROR };
 const diagnDescr EUNRECATT = { "eunratt", "there is no attribue with name '{0}'", LVLERROR };
 const diagnDescr ESINGLEATT = { "esinatt", "this attribute can only be attached once", LVLERROR };
 const diagnDescr ESTACKUNPRED = { "estacku", "stack unpredictable", LVLERROR };
-const diagnDescr EFILENOTEXIST = { "efnexst", "file '{0}' does not exist", LVLERROR};
+const diagnDescr EFILENOTEXIST = { "efnexst", "file '{0}' does not exist", LVLERROR };
+const diagnDescr ENOPAR = { "enoparm", "opcode '{0}' does not take any argument", LVLERROR };
+const diagnDescr EWRONGPAR = { "ewrparm", "wrong kind of parameter provided for opcode '{0}'", LVLERROR };
 
 const diagnDescr WNOSIZE = { "wnosize", "no size attribute is specified for this type", LVLWARNING };
 const diagnDescr WSTACKHIGH = { "wstackh", "{0} value(s) stay on the stack", LVLWARNING };
 const diagnDescr WUNREACHCODE = { "wunreco", "unreachable code detected", LVLWARNING };
 const diagnDescr WMULTIOUTPUT = { "wmultio", "output already specified", LVLWARNING };
 
-const diagnDescr MTOKENOMITTABLE = { "wtokomi", "'{0}' is omittable", LVLMESSAGE };
+const diagnDescr MTOKENOMITTABLE = { "mtokomi", "'{0}' is omittable", LVLMESSAGE };
 
 const attDef ATTRIBUTES[ATTCOUNT] = {
     { "signed",

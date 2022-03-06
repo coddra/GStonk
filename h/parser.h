@@ -1,9 +1,9 @@
-#ifndef PARSING_H
-#define PARSING_H
+#ifndef PARSER_H
+#define PARSER_H
 
-#include "linking.h"
+#include "objects.h"
 
-void init(PARSING);
+void init(PARSER);
 
 setDeclareDefault(char);
 setDeclareVaList(char);
@@ -20,6 +20,7 @@ extern set(char)* stringLiteral;
 extern set(char)* charLiteral;
 extern set(char)* notWhitespace;
 extern set(char)* opSymbols;
+extern set(char)* modifiers;
 
 extern const int tabWidth;
 
@@ -68,4 +69,4 @@ bool parseTypDef(context* c);
 bool parseFunDef(context* c);
 void parse(context* c);
 
-#endif //PARSING_H
+#endif //PARSER_H

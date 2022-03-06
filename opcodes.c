@@ -609,7 +609,7 @@ const opcDef OPS[] = {
         1, 1,
         "",
         FGENERIC,
-        FINT
+        FINT | FUINT
     },
 
     { OPSTAT,
@@ -626,7 +626,7 @@ const opcDef OPS[] = {
         "\tpopq\t\t%rax\n"
         "\tcall\t\t*%rax\n",
         FIMMEDIATE,
-        FNONE
+        FUINT
     },
 
     { OPRET,
@@ -807,14 +807,6 @@ const opcDef OPS[] = {
         "\tpushq\t\t%rax\n",
         FGENERIC | FIMMEDIATE,
         FNONE
-    },
-
-    { OPBUILTIN,
-        "", "",
-        1, 1,
-        "",
-        FNOFLAGS,
-        FUINT
     },
 
     { OPPRINT,

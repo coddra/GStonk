@@ -1,4 +1,5 @@
-#include "h/linking.h"
+#include "h/linker.h"
+#include "h/opcodes.h"
 
 string getCsign(string sign) {
     string res = stringClone(sign);
@@ -75,7 +76,7 @@ u getGlb(context* c, string sign, bool r) {
 }
 ATTKIND getAtt(string sign) {
     u i = 0;
-    for ( ; i < ATTCOUNT && stringEquals(statstr(ATTRIBUTES[i].name), sign); i++);
+    for ( ; i < ATTCOUNT && !stringEquals(statstr(ATTRIBUTES[i].name), sign); i++);
     return i;
 }
 u getVar(list(varDef)* l, string sign, bool r) {
@@ -92,10 +93,26 @@ u getVar(list(varDef)* l, string sign, bool r) {
     return res;
 }
 
-bool isGOP(string code, OP* op) {
+AFLAG kindToFlag(AKIND k) {
+    return k == KNONE ? FNONE : 1 << (k - 1);
+}
+bool isGOP(context* c, string code, par* pars, OP* op) {
+    for (u i = 0; i < OPCOUNT; i++)
+        if (((kindToFlag(pars[0].kind) & OPS[i].arg) != 0 || pars[0].kind == KNONE && OPS[i].arg == FNONE) && (stringEquals(statstr(OPS[i].code), code) || stringEquals(statstr(OPS[i].alias), code))) {
+            *op = i;
+            return (OPS[i].flags & FGENERIC) > 0;
+        }
     for (u i = 0; i < OPCOUNT; i++)
         if (stringEquals(statstr(OPS[i].code), code) || stringEquals(statstr(OPS[i].alias), code)) {
             *op = i;
+            if (OPS[i].arg == FNONE)
+                addDgnLoc(c, ENOPAR, pars[0].loc, cptrify(code));
+            else {
+                if (pars[0].kind == KNONE)
+                    addDgn(c, EMISSINGSYNTAX, "parameter for opcode");
+                else
+                    addDgnLoc(c, EWRONGPAR, pars[0].loc, cptrify(code));
+            }
             return (OPS[i].flags & FGENERIC) > 0;
         }
     *op = OPCOUNT;
@@ -165,6 +182,11 @@ i64 linkBody(context* c, list(opcPtr) b, u f, i64 s) {
                     addDgnEmptyLoc(c, WUNREACHCODE, b.items[i]->loc);
                 as(popc, b.items[i])->argc = c->funs.items[f].ret.len;
                 as(popc, b.items[i])->retc = 0;
+            } else if (b.items[i]->op == OPEVAL) {
+                if (as(popc, b.items[i])->par.kind == KFUN) {
+                    as(popc, b.items[i])->argc = c->funs.items[as(popc, b.items[i])->par.val.r.i].args.len;
+                    as(popc, b.items[i])->retc = c->funs.items[as(popc, b.items[i])->par.val.r.i].ret.len;
+                }
             }
             if (as(popc, b.items[i])->par.kind == KFUN) {
                 if ((c->funs.items[as(popc, b.items[i])->par.val.r.i].flags & FDEFINED) == 0)
@@ -263,5 +285,10 @@ void link(context* c) {
     linkTyp(c, c->typs);
     linkFun(c, c->funs);
     linkVar(c, c->glbs);
+    if (c->flags & FHASMAIN) {
+        if (c->funs.items[c->main].args.len != 0)
+            addDgnLoc(c, EWRONGNUMOFARGS, c->funs.items[c->main].name.loc, cptrify(c->funs.items[c->main].name.sign));
+    } else
+        addDgn(c, EMISSINGSYNTAX, "function with attribute \"main\"");
     c->flags |= FLINKED;
 }

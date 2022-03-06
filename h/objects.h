@@ -1,7 +1,6 @@
 #ifndef OBJECTS_H
 #define OBJECTS_H
 #include "shorts.h"
-#include <stdio.h>
 
 typedef enum {
     LVLMESSAGE,
@@ -33,6 +32,7 @@ typedef enum {
     FUINT   = 1 << (KUINT - 1),
     FDOUB   = 1 << (KDOUB - 1),
     FSTR    = 1 << (KSTR - 1),
+    FANY    = FFUN | FTYP | FGLB | FLOC | FARG | FINT | FUINT | FDOUB | FSTR,
 } AFLAG;//argument flag
 typedef enum {
     FNOFLAGS      = 0,
@@ -88,10 +88,10 @@ typedef enum {
 
     OPFLAGS,  OPVERR,   OPVERW,
 
-    OPBUILTIN,//uint
     OPPRINT,  OPMALLOC, OPFREE,   OPREALLOC, OPEXIT,
 
     OPCOUNT,//number of opcodes
+    OPBUILTIN = OPPRINT,//uint
 } OP;//operation codes
 typedef enum {
     ATTSIGNED,
@@ -267,6 +267,8 @@ extern const diagnDescr EUNRECATT;
 extern const diagnDescr ESINGLEATT;
 extern const diagnDescr ESTACKUNPRED;
 extern const diagnDescr EFILENOTEXIST;
+extern const diagnDescr ENOPAR;
+extern const diagnDescr EWRONGPAR;
 
 extern const diagnDescr WNOSIZE;
 extern const diagnDescr WSTACKHIGH;

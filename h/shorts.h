@@ -164,6 +164,10 @@ typedef double d;
         }                                                               \
     }                                                                   \
     list(type) type##ListGetRange(list(type) list, u index, u count) {  \
+        if (count == 0) {                                               \
+            list(type) res = { 0 };                                    \
+            return res;                                                 \
+        }                                                               \
         list(type) res = { count, 16, NULL };                           \
         while (res.len > res.cap)                                       \
             res.cap <<= 1;                                              \
@@ -296,6 +300,7 @@ typedef enum {
     type##ComplementSet type##ComplementSetDefault();                   \
     type##CombinedSet type##CombinedSetDefault();                       \
     set(type)* type##AggregateNew(list(type));                          \
+    set(type)* type##AggregateFromArray(type*, u);                      \
     set(type)* type##ComplementSetNew(set(type)*);                      \
     set(type)* type##CombinedSetNew(set(type)*, set(type)*, SETCOMBINATIONSTYLE); \
     set(type)* type##SetAdd(set(type)*, set(type)*);                    \
@@ -368,6 +373,9 @@ typedef enum {
         as(type##CombinedSet, res)->right = right;                       \
         as(type##CombinedSet, res)->scs = scs;                           \
         return res;                                                     \
+    }                                                                   \
+    set(type)* type##AggregateFromArray(type* a, u count) {             \
+        return type##AggregateNew(type##ListFromArray(a, count));       \
     }                                                                   \
     set(type)* type##SetAdd(set(type)* left, set(type)* right) {        \
         return type##CombinedSetNew(left, right, SCSADD);               \
