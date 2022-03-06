@@ -58,12 +58,6 @@ void stringRemoveRange(string* str, u index, u count) {
 string stringGetRange(string str, u index, u count) {
     return charListGetRange(str, index, count);
 }
-void stringEnsureCapacity(string* str, u count) {
-    charListEnsureCapacity(str, count);
-}
-void stringSet(string* str, char* other, u length) {
-    charListSet(str, other, length);
-}
 bool stringContains(string str, char item) {
     return charListContains(str, item);
 }

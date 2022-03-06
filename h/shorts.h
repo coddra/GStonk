@@ -32,30 +32,28 @@ typedef double d;
     } list(type);                                                       \
     list(type) type##ListDefault();                                     \
     list(type)* type##ListNew();                                        \
-    list(type) type##ListFromArray(type*, u);                           \
-    list(type) type##ListClone(list(type));                             \
-    void type##ListAdd(list(type)*, type);                              \
-    void type##ListAddRange(list(type)*, list(type));                   \
-    void type##ListInsert(list(type)*, type, u);                        \
-    void type##ListInsertRange(list(type)*, list(type), u);             \
-    void type##ListRemove(list(type)*, u);                              \
-    void type##ListRemoveRange(list(type)*, u, u);                      \
-    list(type) type##ListGetRange(list(type), u, u);                    \
-    void type##ListEnsureCapacity(list(type)*, u);                      \
-    void type##ListSet(list(type)*, type*, u)
+    list(type) type##ListFromArray(type* items, u count);               \
+    list(type) type##ListClone(list(type) original);                    \
+    void type##ListAdd(list(type)* list, type item);                    \
+    void type##ListAddRange(list(type)* list, list(type) other);        \
+    void type##ListInsert(list(type)* list, type item, u index);        \
+    void type##ListInsertRange(list(type)* list, list(type) other, u index); \
+    void type##ListRemove(list(type)* list, u index);                   \
+    void type##ListRemoveRange(list(type)* list, u index, u count);     \
+    list(type) type##ListGetRange(list(type) list, u index, u count);
 #define listDeclareVaList(type)                                         \
-    list(type) type##ListFromVaList(u, ...);
+    list(type) type##ListFromVaList(u count, ...);
 #define listDeclareEquals(type)                                         \
     listDeclare(type);                                                  \
-    bool type##ListContains(list(type), type);                          \
-    bool type##ListRangeEquals(list(type), list(type), u);              \
-    bool type##ListEquals(list(type), list(type));                      \
-    bool type##ListStartsWith(list(type), list(type));                  \
-    bool type##ListEndsWith(list(type), list(type));                    \
-    void type##ListReplaceAll(list(type)*, list(type), list(type))
+    bool type##ListContains(list(type) list, type item);                \
+    bool type##ListRangeEquals(list(type) list, list(type) other, u index); \
+    bool type##ListEquals(list(type) list, list(type) other);           \
+    bool type##ListStartsWith(list(type) list, list(type) other);       \
+    bool type##ListEndsWith(list(type) list, list(type) other);         \
+    void type##ListReplaceAll(list(type)* list, list(type) original, list(type) replacement)
 #define listDeclareDefault(type)                                        \
     listDeclareEquals(type);                                            \
-    bool type##Equals(type, type)
+    bool type##Equals(type left, type right)
 
 #define listDefine(type)                                                \
     list(type) type##ListDefault() {                                    \
@@ -174,23 +172,6 @@ typedef double d;
         res.items = (type*)malloc(res.cap * sizeof(type));              \
         memcpy(res.items, &list.items[index], count);                   \
         return res;                                                     \
-    }                                                                   \
-    void type##ListEnsureCapacity(list(type)* list, u cap) {            \
-        if (list->cap < cap) {                                           \
-            while (list->cap < cap)                                      \
-                list->cap <<= 1;                                         \
-            list->items = (type*)realloc(list->items, list->cap * sizeof(type)); \
-        }                                                               \
-    }                                                                   \
-    void type##ListSet(list(type)* list, type* items, u count) {        \
-        free(list->items);                                               \
-        list->items = items;                                             \
-        list->len = count;                                               \
-        while (list->len < list->cap >> 1 && list->cap > 16)               \
-            list->cap >>=1;                                              \
-        while (list->len > list->cap)                                     \
-            list->cap <<= 1;                                             \
-        list->items = (type*)realloc(list->items, list->cap * sizeof(type)); \
     }
 #define listDefineVaList(type)                                          \
     list(type) type##ListFromVaList(u count, ...) {                     \
@@ -293,23 +274,23 @@ typedef enum {
         type##Set* right;                                               \
         SETCOMBINATIONSTYLE scs;                                        \
     } type##CombinedSet;                                                \
-    bool type##AggregateContains(set(type)*, type);                     \
-    bool type##ComplementSetContains(set(type)*, type);                 \
-    bool type##CombinedSetContains(set(type)*, type);                   \
+    bool type##AggregateContains(set(type)* set, type item);            \
+    bool type##ComplementSetContains(set(type)* set, type item);        \
+    bool type##CombinedSetContains(set(type)* set, type item);          \
     aggregate(type) type##AggregateDefault();                           \
     type##ComplementSet type##ComplementSetDefault();                   \
     type##CombinedSet type##CombinedSetDefault();                       \
-    set(type)* type##AggregateNew(list(type));                          \
-    set(type)* type##AggregateFromArray(type*, u);                      \
-    set(type)* type##ComplementSetNew(set(type)*);                      \
-    set(type)* type##CombinedSetNew(set(type)*, set(type)*, SETCOMBINATIONSTYLE); \
-    set(type)* type##SetAdd(set(type)*, set(type)*);                    \
-    set(type)* type##SetSubstract(set(type)*, set(type)*);              \
-    set(type)* type##Cross(set(type)*, set(type)*);                     \
-    set(type)* type##SetComplement(set(type)*);                         \
-    bool type##SetContains(set(type)*, type)
+    set(type)* type##AggregateNew(list(type) list);                     \
+    set(type)* type##AggregateFromArray(type* items, u count);          \
+    set(type)* type##ComplementSetNew(set(type)* set);                  \
+    set(type)* type##CombinedSetNew(set(type)* left, set(type)* right, SETCOMBINATIONSTYLE style); \
+    set(type)* type##SetAdd(set(type)* left, set(type)* right);         \
+    set(type)* type##SetSubstract(set(type)* left, set(type)* right);   \
+    set(type)* type##Cross(set(type)* left, set(type)* right);          \
+    set(type)* type##SetComplement(set(type)* set);                     \
+    bool type##SetContains(set(type)* set, type item)
 #define setDeclareVaList(type)                                          \
-    set(type)* type##AggregateFromVaList(u, ...);
+    set(type)* type##AggregateFromVaList(u count, ...);
 #define setDeclareCompare(type)                                         \
     setDeclare(type);                                                   \
     typedef struct {                                                    \
@@ -319,13 +300,13 @@ typedef enum {
         type min;                                                       \
         type max;                                                       \
     } range(type);                                                      \
-    bool type##RangeContains(set(type)*, type);                         \
+    bool type##RangeContains(set(type)* set, type item);                \
     range(type) type##RangeDefault();                                   \
-    type##Set* type##RangeNew(type, type)
+    type##Set* type##RangeNew(type min, type max)
 #define setDeclareDefault(type)                                         \
     setDeclareCompare(type);                                            \
-    bool type##LessThan(type, type);                                    \
-    bool type##GreaterThan(type, type)
+    bool type##LessThan(type left, type right);                         \
+    bool type##GreaterThan(type left, type right)
 
 #define setDefine(type)                                                 \
     bool type##AggregateContains(set(type)* set, type item) {           \
@@ -360,22 +341,22 @@ typedef enum {
         as(aggregate(type), res)->items = items;                         \
         return res;                                                     \
     }                                                                   \
-    type##Set* type##ComplementSetNew(set(type)* orgnl) {               \
+    type##Set* type##ComplementSetNew(set(type)* set) {                 \
         set(type)* res = as(set(type), alloc(type##ComplementSet));     \
         *as(type##ComplementSet, res) = type##ComplementSetDefault();   \
-        as(type##ComplementSet, res)->orgnl = orgnl;                     \
+        as(type##ComplementSet, res)->orgnl = set;                       \
         return res;                                                     \
     }                                                                   \
-    type##Set* type##CombinedSetNew(set(type)* left, set(type)* right, SETCOMBINATIONSTYLE scs) { \
+    type##Set* type##CombinedSetNew(set(type)* left, set(type)* right, SETCOMBINATIONSTYLE style) { \
         set(type)* res = as(set(type), alloc(type##CombinedSet));       \
         *as(type##CombinedSet, res) = type##CombinedSetDefault();       \
         as(type##CombinedSet, res)->left = left;                         \
         as(type##CombinedSet, res)->right = right;                       \
-        as(type##CombinedSet, res)->scs = scs;                           \
+        as(type##CombinedSet, res)->scs = style;                         \
         return res;                                                     \
     }                                                                   \
-    set(type)* type##AggregateFromArray(type* a, u count) {             \
-        return type##AggregateNew(type##ListFromArray(a, count));       \
+    set(type)* type##AggregateFromArray(type* items, u count) {         \
+        return type##AggregateNew(type##ListFromArray(items, count));   \
     }                                                                   \
     set(type)* type##SetAdd(set(type)* left, set(type)* right) {        \
         return type##CombinedSetNew(left, right, SCSADD);               \
@@ -480,8 +461,6 @@ void stringInsertRange(string* str, string other, u index);
 void stringRemove(string* str, u index);
 void stringRemoveRange(string* str, u index, u count);
 string stringGetRange(string str, u index, u count);
-void stringEnsureCapacity(string* str, u count);
-void stringSet(string* str, char* other, u length);
 bool stringContains(string str, char item);
 bool stringRangeEquals(string str, string other, u index);
 bool stringStartsWith(string str, string other);
