@@ -1,11 +1,13 @@
 #include "h/shorts.h"
 #include "h/objects.h"
+#include "h/diagnostics.h"
 #include "h/parser.h"
 #include "h/linker.h"
 #include "h/compiler.h"
+
 char* OFLAG = "-o";
+char* MFLAG = "-m";
 char* WFLAG = "-w";
-char* WOFF = "woff";
 char* GDBFLAG = "-gdb";
 
 void parseArgs(context* c, list(string) args) {
@@ -16,15 +18,24 @@ void parseArgs(context* c, list(string) args) {
             else
                 c->output = substring(args.items[i], 2);
         } else if (stringStartsWith(args.items[i], statstr(WFLAG))) {
-            if (stringEquals(substring(args.items[i], 1), statstr(WOFF)))
-                c->flags |= FWARNINGSOFF;
+            if (stringEquals(args.items[i], statstr(WFLAG)))
+                c->flags |= FIGNOREWRNGS;
             else
-                stringListAdd(&c->ignorew, substring(args.items[i], 1));
+                uListAdd(&c->ignoreDgns, getDgn(substring(args.items[i], 1)));
+        } else if (stringStartsWith(args.items[i], statstr(MFLAG))) {
+            if (stringEquals(args.items[i], statstr(MFLAG)))
+                c->flags |= FIGNOREMSGS;
+            else
+                uListAdd(&c->ignoreDgns, getDgn(substring(args.items[i], 1)));
         } else if (stringEquals(args.items[i], statstr(GDBFLAG)))
             c->flags |= FGDB;
         else {
-            if (fileExists(args.items[i]))
-                stringListAdd(&c->inputs, args.items[i]);
+            if (fileExists(args.items[i])) {
+                if (stringListContains(c->inputs, args.items[i]))
+                    addDgn(c, MMULTIFILE, cptrify(args.items[i]));
+                else
+                    stringListAdd(&c->inputs, args.items[i]);
+            }
             else
                 addDgn(c, EFILENOTEXIST, cptrify(args.items[i]));
         }

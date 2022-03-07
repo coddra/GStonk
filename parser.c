@@ -2,6 +2,7 @@
 #include "h/preprocessor.h"
 #include "h/linker.h"
 #include "h/opcodes.h"
+#include "h/diagnostics.h"
 
 setDeclareDefault(char);
 setDefineDefault(char);

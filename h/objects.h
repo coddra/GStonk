@@ -40,11 +40,12 @@ typedef enum {
     FGENERIC      = 1 << 1,
     FIMMEDIATE    = 1 << 2,
     FLINKED       = 1 << 3,
-    FWARNINGSOFF  = 1 << 4,
-    FHASMAIN      = 1 << 5,
-    FGDB          = 1 << 6,
-    FREFERENCED   = 1 << 7,
-    FSINGLE       = 1 << 7,
+    FIGNOREMSGS   = 1 << 4,
+    FIGNOREWRNGS  = FIGNOREMSGS | (1 << 5),
+    FHASMAIN      = 1 << 6,
+    FGDB          = 1 << 7,
+    FREFERENCED   = 1 << 8,
+    FSINGLE       = 1 << 9,
 } FLAGS;//flags
 typedef enum {
     OPADD,    OPADDF,   OPINC,
@@ -98,6 +99,37 @@ typedef enum {
     ATTMAIN,
     ATTCOUNT
 } ATTKIND;
+typedef enum {
+    EMISSINGTOKEN,
+    EMISSINGSYNTAX,
+    EUNRECESCSEQ,
+    ESECONDDECLARATION,
+    EARGOUTOFRANGE,
+    EUNRECTOKEN,
+    EDEFNOTFOUND,
+    EWRONGNUMOFPARAMS,
+    EWRONGNUMOFARGS,
+    EMULTIMAIN,
+    ENOINPUT,
+    EWRONGSIZE,
+    ESTACKLOW,
+    EUNRECATT,
+    ESINGLEATT,
+    ESTACKUNPRED,
+    EFILENOTEXIST,
+    ENOPAR,
+    EWRONGPAR,
+
+    WNOSIZE,
+    WSTACKHIGH,
+    WUNREACHCODE,
+    WMULTIOUTPUT,
+
+    MTOKENOMITTABLE,
+    MMULTIFILE,
+
+    DIAGNCOUNT,
+} DIAGNKIND;
 enum {
     opcType = objectType + 1,
     popcType,
@@ -225,7 +257,7 @@ typedef char* charPtr;
 listDeclareEquals(charPtr);
 bool charPtrEquals(charPtr, charPtr);
 typedef struct diagn_s {
-    diagnDescr descr;
+    DIAGNKIND descr;
     loc loc;
     list(charPtr) params;
 } diagn;//diagnostic
@@ -243,39 +275,13 @@ typedef struct context_s {
     list(varDef) glbs;
     list(string) strs;
     list(diagn)  dgns;
-    list(string) ignorew;
+    list(u) ignoreDgns;
     u main;
     list(string) inputs;
     string output;
     FLAGS flags;
 } context;//i don't think i have to explain this
 
-extern const diagnDescr EMISSINGTOKEN;
-extern const diagnDescr EMISSINGSYNTAX;
-extern const diagnDescr EUNRECESCSEQ;
-extern const diagnDescr ESECONDDECLARATION;
-extern const diagnDescr EARGOUTOFRANGE;
-extern const diagnDescr EUNRECTOKEN;
-extern const diagnDescr EDEFNOTFOUND;
-extern const diagnDescr EWRONGNUMOFPARAMS;
-extern const diagnDescr EWRONGNUMOFARGS;
-extern const diagnDescr EMULTIMAIN;
-extern const diagnDescr ENOINPUT;
-extern const diagnDescr EWRONGSIZE;
-extern const diagnDescr ESTACKLOW;
-extern const diagnDescr EUNRECATT;
-extern const diagnDescr ESINGLEATT;
-extern const diagnDescr ESTACKUNPRED;
-extern const diagnDescr EFILENOTEXIST;
-extern const diagnDescr ENOPAR;
-extern const diagnDescr EWRONGPAR;
-
-extern const diagnDescr WNOSIZE;
-extern const diagnDescr WSTACKHIGH;
-extern const diagnDescr WUNREACHCODE;
-extern const diagnDescr WMULTIOUTPUT;
-
-extern const diagnDescr MTOKENOMITTABLE;
 
 extern const attDef ATTRIBUTES[ATTCOUNT];
 
@@ -296,16 +302,6 @@ typDef typDefDefault();
 diagnDescr diagnDescrDefault();
 diagn diagnDefault();
 context contextDefault();
-
-void addDgnMultiLoc(context* c, diagnDescr desc, loc loc, list(charPtr) params);
-void addDgnLoc(context* c, diagnDescr desc, loc loc, char* param);
-void addDgnMulti(context* c, diagnDescr desc, list(charPtr) params);
-void addDgnEmpty(context* c, diagnDescr desc);
-void addDgnEmptyLoc(context* c, diagnDescr desc, loc loc);
-void addDgn(context* c, diagnDescr desc, char* param);
-string diagnToString(diagn d);
-void printDgns(context* c);
-bool checkErr(context* c);
 
 string codeFrom(context* c, loc o);
 

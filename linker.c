@@ -1,5 +1,6 @@
 #include "h/linker.h"
 #include "h/opcodes.h"
+#include "h/diagnostics.h"
 
 string getCsign(string sign) {
     string res = stringClone(sign);
@@ -77,6 +78,11 @@ u getGlb(context* c, string sign, bool r) {
 ATTKIND getAtt(string sign) {
     u i = 0;
     for ( ; i < ATTCOUNT && !stringEquals(statstr(ATTRIBUTES[i].name), sign); i++);
+    return i;
+}
+DIAGNKIND getDgn(string sign) {
+    u i = 0;
+    for ( ; i < DIAGNCOUNT && !stringEquals(statstr(DIAGNOSTICS[i].id), sign); i++);
     return i;
 }
 u getVar(list(varDef)* l, string sign, bool r) {
