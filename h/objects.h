@@ -46,6 +46,8 @@ typedef enum {
     FGDB          = 1 << 7,
     FREFERENCED   = 1 << 8,
     FSINGLE       = 1 << 9,
+    FARGCRETC     = 1 << 10,
+    FHASBODY      = 1 << 11,
 } FLAGS;//flags
 typedef enum {
     OPADD,    OPADDF,   OPINC,
@@ -76,10 +78,9 @@ typedef enum {
 
     OPRET,//not immediate
 
-
     OPLDADDR, OPST,//incomplete
 
-    OPIF,     OPELIF,   OPWHILE,  OPTRY,    OPELSE,//incomplete
+    OPIF,     OPWHILE,  OPTRY,//incomplete
     OPTHROW,
 
     OPEVAL,//incomplete
@@ -92,7 +93,7 @@ typedef enum {
     OPPRINT,  OPMALLOC, OPFREE,   OPREALLOC, OPEXIT,
 
     OPCOUNT,//number of opcodes
-    OPBUILTIN = OPPRINT,//uint
+    OPBUILTIN = OPPRINT,//uint, will be used on handling bytecode
 } OP;//operation codes
 typedef enum {
     ATTSIGNED,
@@ -127,18 +128,10 @@ typedef enum {
 
     MTOKENOMITTABLE,
     MMULTIFILE,
+    MNOTREFERENCED,
 
-    DIAGNCOUNT,
-} DIAGNKIND;
-enum {
-    opcType = objectType + 1,
-    popcType,
-    bopcType,
-    defType,
-    funDefType,
-    typDefType,
-    varDefType,
-};
+    DGNCOUNT,
+} DGNKIND;
 
 typedef struct loc_s {
     u cr;
@@ -172,7 +165,6 @@ typedef struct att_s {
 } att;//attribute
 
 #define opcDerive                               \
-    u TYPE;                                     \
     OP op;                                      \
     loc loc
 typedef struct opc_s {
@@ -197,6 +189,8 @@ typedef struct bopc_s {
     i64 retc2;
 } bopc;//operation code with body
 
+struct context_s;
+typedef struct context_s context;
 typedef struct opcDef_s {
     OP id;
     char* code;
@@ -204,6 +198,7 @@ typedef struct opcDef_s {
     u8 argc;
     u8 retc;
     char* comp;
+    void (*link)(context* c, opc* o, u f, i64* s);
     FLAGS flags;
     AFLAG arg;
 } opcDef;//operation code definition
@@ -221,7 +216,6 @@ typedef struct name_s {
 } name;
 listDeclare(att);
 #define defDerive                               \
-    objectDerive;                               \
     name name;                                  \
     list(att) attrs;                            \
     FLAGS  flags
@@ -248,23 +242,23 @@ typedef struct typDef_s {
     list(varDef) flds;
 } typDef;//type definition
 
-typedef struct diagnDescr_s {
+typedef struct dgnDscr_s {
     char* id;
     char* msg;
     LVL lvl;
-} diagnDescr;//diagnostic descriptor
+} dgnDscr;//diagnostic descriptor
 typedef char* charPtr;
 listDeclareEquals(charPtr);
 bool charPtrEquals(charPtr, charPtr);
-typedef struct diagn_s {
-    DIAGNKIND descr;
+typedef struct dgn_s {
+    DGNKIND descr;
     loc loc;
     list(charPtr) params;
-} diagn;//diagnostic
+} dgn;//diagnostic
 
 listDeclare(typDef);
 listDeclare(funDef);
-listDeclare(diagn);
+listDeclare(dgn);
 listDeclareEquals(string);
 typedef struct context_s {
     string text;
@@ -274,7 +268,7 @@ typedef struct context_s {
     list(typDef) typs;
     list(varDef) glbs;
     list(string) strs;
-    list(diagn)  dgns;
+    list(dgn)  dgns;
     list(u) ignoreDgns;
     u main;
     list(string) inputs;
@@ -299,8 +293,8 @@ def defDefault();
 varDef varDefDefault();
 funDef funDefDefault();
 typDef typDefDefault();
-diagnDescr diagnDescrDefault();
-diagn diagnDefault();
+dgnDscr dgnDscrDefault();
+dgn dgnDefault();
 context contextDefault();
 
 string codeFrom(context* c, loc o);

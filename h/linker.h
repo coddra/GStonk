@@ -13,11 +13,12 @@ u getFun(context* c, string sign, bool r);
 u getTyp(context* c, string sign, bool r);
 u getGlb(context* c, string sign, bool r);
 ATTKIND getAtt(string sign);
-DIAGNKIND getDgn(string sign);
+DGNKIND getDgn(string sign);
 u getVar(list(varDef)* l, string sign, bool r);
 
 bool isGOP(context* c, string code, par* pars, OP* op);
 
+void linkBody(context* c, list(opcPtr) b, u f, i64* s);
 void link(context* c);
 
 #endif //LINKER_H

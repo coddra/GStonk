@@ -2,15 +2,15 @@
 #define DIAGNOSTICS_H
 #include "objects.h"
 
-extern const diagnDescr DIAGNOSTICS[DIAGNCOUNT];
+extern const dgnDscr DGNS[DGNCOUNT];
 
-void addDgnMultiLoc(context* c, DIAGNKIND desc, loc loc, list(charPtr) params);
-void addDgnLoc(context* c, DIAGNKIND desc, loc loc, char* param);
-void addDgnMulti(context* c, DIAGNKIND desc, list(charPtr) params);
-void addDgnEmpty(context* c, DIAGNKIND desc);
-void addDgnEmptyLoc(context* c, DIAGNKIND desc, loc loc);
-void addDgn(context* c, DIAGNKIND desc, char* param);
-string diagnToString(diagn d);
+void addDgnMultiLoc(context* c, DGNKIND desc, loc loc, list(charPtr) params);
+void addDgnLoc(context* c, DGNKIND desc, loc loc, char* param);
+void addDgnMulti(context* c, DGNKIND desc, list(charPtr) params);
+void addDgnEmpty(context* c, DGNKIND desc);
+void addDgnEmptyLoc(context* c, DGNKIND desc, loc loc);
+void addDgn(context* c, DGNKIND desc, char* param);
+string dgnToString(dgn d);
 void printDgns(context* c);
 bool checkErr(context* c);
 

@@ -80,9 +80,9 @@ ATTKIND getAtt(string sign) {
     for ( ; i < ATTCOUNT && !stringEquals(statstr(ATTRIBUTES[i].name), sign); i++);
     return i;
 }
-DIAGNKIND getDgn(string sign) {
+DGNKIND getDgn(string sign) {
     u i = 0;
-    for ( ; i < DIAGNCOUNT && !stringEquals(statstr(DIAGNOSTICS[i].id), sign); i++);
+    for ( ; i < DGNCOUNT && !stringEquals(statstr(DGNS[i].id), sign); i++);
     return i;
 }
 u getVar(list(varDef)* l, string sign, bool r) {
@@ -106,7 +106,7 @@ bool isGOP(context* c, string code, par* pars, OP* op) {
     for (u i = 0; i < OPCOUNT; i++)
         if (((kindToFlag(pars[0].kind) & OPS[i].arg) != 0 || pars[0].kind == KNONE && OPS[i].arg == FNONE) && (stringEquals(statstr(OPS[i].code), code) || stringEquals(statstr(OPS[i].alias), code))) {
             *op = i;
-            return (OPS[i].flags & FGENERIC) > 0;
+            return (OPS[i].flags & FGENERIC) != 0;
         }
     for (u i = 0; i < OPCOUNT; i++)
         if (stringEquals(statstr(OPS[i].code), code) || stringEquals(statstr(OPS[i].alias), code)) {
@@ -119,14 +119,14 @@ bool isGOP(context* c, string code, par* pars, OP* op) {
                 else
                     addDgnLoc(c, EWRONGPAR, pars[0].loc, cptrify(code));
             }
-            return (OPS[i].flags & FGENERIC) > 0;
+            return (OPS[i].flags & FGENERIC) != 0;
         }
     *op = OPCOUNT;
     return false;
 }
 
 static void linkAtt(context* c, list(att) atts) {
-    static list(u) ul = {0};
+    list(u) ul = {0};
     if (ul.cap == 0)
         ul = uListDefault();
     else
@@ -142,7 +142,7 @@ static void linkAtt(context* c, list(att) atts) {
     }
 }
 static void linkVar(context* c, list(varDef) vars) {
-    static i64 lastDef = -1;
+    i64 lastDef = -1;
     for (u i = 0 ; i < vars.len; i++)
         if (vars.items[i].flags & FDEFINED) {
             if ((c->typs.items[vars.items[i].type.i].flags & FDEFINED) == 0)
@@ -154,6 +154,8 @@ static void linkVar(context* c, list(varDef) vars) {
             lastDef = i;
             linkAtt(c, vars.items[i].attrs);
             vars.items[i].name.csign = getCsign(vars.items[i].name.sign);
+            if ((vars.items[i].flags & FREFERENCED) == 0)
+                addDgnLoc(c, MNOTREFERENCED, vars.items[i].name.loc, cptrify(vars.items[i].name.sign));
             vars.items[i].flags |= FLINKED;
         }
 }
@@ -163,6 +165,8 @@ static void linkTyp(context* c, list(typDef) typs) {
             linkAtt(c, typs.items[i].attrs);
             linkVar(c, typs.items[i].flds);
             typs.items[i].name.csign = getCsign(typs.items[i].name.sign);
+            if ((typs.items[i].flags & FREFERENCED) == 0)
+                addDgnLoc(c, MNOTREFERENCED, typs.items[i].name.loc, cptrify(typs.items[i].name.sign));
             typs.items[i].flags |= FLINKED;
         }
 }
@@ -171,99 +175,48 @@ static void linkTypList(context* c, list(ref) typs) {
         if ((c->typs.items[typs.items[i].i].flags & FDEFINED) == 0)
             addDgnLoc(c, EDEFNOTFOUND, typs.items[i].loc, cptrify(c->typs.items[typs.items[i].i].name.sign));
 }
-static i64 linkBody(context* c, list(opcPtr) b, u f, i64 s) {
-    for (u i = 0; i < b.len; i++)
-        if (is(popc, b.items[i])) {
-            if (b.items[i]->op == OPLDAT) {
-                if (as(popc, b.items[i])->par.val.i == -8)
-                    as(popc, b.items[i])->par.val.i = 8;
-                if (as(popc, b.items[i])->par.val.i != -4 && as(popc, b.items[i])->par.val.i != -2 && as(popc, b.items[i])->par.val.i != -1 &&
-                    as(popc, b.items[i])->par.val.i != 1 && as(popc, b.items[i])->par.val.i != 2 && as(popc, b.items[i])->par.val.i != 4 && as(popc, b.items[i])->par.val.i != 8)
-                    addDgnEmpty(c, EARGOUTOFRANGE);
-            } else if (b.items[i]->op == OPSTAT) {
-                if (as(popc, b.items[i])->par.val.u != 1 && as(popc, b.items[i])->par.val.u != 2 && as(popc, b.items[i])->par.val.i != 4 && as(popc, b.items[i])->par.val.i != 8)
-                    addDgnEmpty(c, EARGOUTOFRANGE);
-            } else if (b.items[i]->op == OPRET) {
-                if (i != b.len - 1)
-                    addDgnEmptyLoc(c, WUNREACHCODE, b.items[i]->loc);
-                as(popc, b.items[i])->argc = c->funs.items[f].ret.len;
-                as(popc, b.items[i])->retc = 0;
-            } else if (b.items[i]->op == OPEVAL) {
-                if (as(popc, b.items[i])->par.kind == KFUN) {
-                    as(popc, b.items[i])->argc = c->funs.items[as(popc, b.items[i])->par.val.r.i].args.len;
-                    as(popc, b.items[i])->retc = c->funs.items[as(popc, b.items[i])->par.val.r.i].ret.len;
-                }
-            }
-            if (as(popc, b.items[i])->par.kind == KFUN) {
-                if ((c->funs.items[as(popc, b.items[i])->par.val.r.i].flags & FDEFINED) == 0)
-                    addDgnLoc(c, EDEFNOTFOUND, as(popc, b.items[i])->par.val.r.loc, cptrify(c->funs.items[as(popc, b.items[i])->par.val.r.i].name.sign));
-                else {
-                    as(popc, b.items[i])->argc = c->funs.items[as(popc, b.items[i])->par.val.r.i].args.len;
-                    as(popc, b.items[i])->retc = c->funs.items[as(popc, b.items[i])->par.val.r.i].ret.len;
-                }
-            } else if (as(popc, b.items)->par.kind == KTYP && (c->typs.items[as(popc, b.items[i])->par.val.r.i].flags & FDEFINED) == 0)
-                addDgnLoc(c, EDEFNOTFOUND, as(popc, b.items[i])->par.val.r.loc, cptrify(c->funs.items[as(popc, b.items[i])->par.val.r.i].name.sign));
-            else if (as(popc, b.items[i])->par.kind == KGLB && (c->glbs.items[as(popc, b.items[i])->par.val.r.i].flags & FDEFINED) == 0)
-                addDgnLoc(c, EDEFNOTFOUND, as(popc, b.items[i])->par.val.r.loc, cptrify(c->glbs.items[as(popc, b.items[i])->par.val.r.i].name.sign));
-            else if (as(popc, b.items[i])->par.kind == KARG && (c->funs.items[f].args.items[as(popc, b.items[i])->par.val.r.i].flags & FDEFINED) == 0)
-                addDgnLoc(c, EDEFNOTFOUND, as(popc, b.items[i])->par.val.r.loc,
-                          c->funs.items[f].args.items[as(popc, b.items[i])->par.val.r.i].name.sign.len == 0 ?
-                          strcat("#", utos(as(popc, b.items[i])->par.val.r.i)) :
-                          cptrify(c->funs.items[f].args.items[as(popc, b.items[i])->par.val.r.i].name.sign));
-            else if (as(popc, b.items[i])->par.kind == KLOC && (c->funs.items[f].locs.items[as(popc, b.items[i])->par.val.r.i].flags & FDEFINED) == 0)
-                addDgnLoc(c, EDEFNOTFOUND, as(popc, b.items[i])->par.val.r.loc,
-                          c->funs.items[f].locs.items[as(popc, b.items[i])->par.val.r.i].name.sign.len == 0 ?
-                          strcat("`", utos(as(popc, b.items[i])->par.val.r.i)) :
-                          cptrify(c->funs.items[f].locs.items[as(popc, b.items[i])->par.val.r.i].name.sign));
-            if (as(popc, b.items[i])->par.kind == KFLD && (c->typs.items[as(popc, b.items[i])->par.val.r.i].flds.items[as(popc, b.items[i])->par2.val.r.i].flags & FDEFINED) == 0)
-                addDgnLoc(c, EDEFNOTFOUND, as(popc, b.items[i])->par2.val.r.loc, cptrify(c->typs.items[as(popc, b.items[i])->par.val.r.i].flds.items[as(popc, b.items[i])->par2.val.r.i].name.sign));
-            s -= as(popc, b.items[i])->argc;
-            if (s < 0){
-                addDgnEmptyLoc(c, ESTACKLOW, b.items[i]->loc);
-                s = 0;
-            }
-            s += as(popc, b.items[i])->retc;
-        } else if (is(bopc, b.items[i])) {
-            static i64 h;
-            if (b.items[i]->op == OPIF || b.items[i]->op == OPWHILE) {
-                h = linkBody(c, as(bopc, b.items[i])->head, f, s) - s;
-                s += h;
-                if (s == 0)
-                    addDgnEmptyLoc(c, ESTACKLOW, b.items[i]->loc);
-                else
-                    s--;
-            }
-            if (b.items[i]->op == OPWHILE) {
-                i64 tmp = s;
-                s = linkBody(c, as(bopc, b.items[i])->body, f, s);
-                if (h + s - tmp != 1)
-                    addDgnEmptyLoc(c, ESTACKUNPRED, b.items[i]->loc);
-                s = tmp;
-            }
-            if (b.items[i]->op == OPIF || b.items[i]->op == OPTRY) {
-                i64 s1 = linkBody(c, as(bopc, b.items[i])->body, f, b.items[i]->op == OPIF ? s : 0);
-                i64 s2 = as(bopc, b.items[i])->body2.len == 0 ? (b.items[i]->op == OPIF ? s : 0) : linkBody(c, as(bopc, b.items[i])->body2, f, b.items[i]->op == OPIF ? s : 1);
-                if (b.items[i]->op == OPTRY) {
-                    as(bopc, b.items[i])->retc = s1;
-                    as(bopc, b.items[i])->retc2 = s2;
-                }
-                if (s1 != s2)
-                    addDgnEmptyLoc(c, ESTACKUNPRED, b.items[i]->loc);
-                if (s2 < s1)
-                    s1 = s2;
-                s = b.items[i]->op == OPIF ? s1 : s + s1;
-            }
-        } else {
-            if (b.items[i]->op == OPTHROW && i != b.len - 1)
-                addDgnEmptyLoc(c, WUNREACHCODE, b.items[i]->loc);
-            s -= OPS[b.items[i]->op].argc;
-            if (s < 0) {
-                addDgnEmptyLoc(c, ESTACKLOW, b.items[i]->loc);
-                s = 0;
-            }
-            s += OPS[b.items[i]->op].retc;
+static void linkParam(context* c, opc* o, u f) {
+    if (as(popc, o)->par.kind == KFUN && (c->funs.items[as(popc, o)->par.val.r.i].flags & FDEFINED) == 0)
+        addDgnLoc(c, EDEFNOTFOUND, as(popc, o)->par.val.r.loc, cptrify(c->funs.items[as(popc, o)->par.val.r.i].name.sign));
+    else if (as(popc, o)->par.kind == KTYP || as(popc, o)->par.kind == KFLD) {
+        if ((c->typs.items[as(popc, o)->par.val.r.i].flags & FDEFINED) == 0)
+            addDgnLoc(c, EDEFNOTFOUND, as(popc, o)->par.val.r.loc, cptrify(c->funs.items[as(popc, o)->par.val.r.i].name.sign));
+        else if (as(popc, o)->par.kind == KFLD && (c->typs.items[as(popc, o)->par.val.r.i].flds.items[as(popc, o)->par2.val.r.i].flags & FDEFINED) == 0)
+            addDgnLoc(c, EDEFNOTFOUND, as(popc, o)->par2.val.r.loc, cptrify(c->typs.items[as(popc, o)->par.val.r.i].flds.items[as(popc, o)->par2.val.r.i].name.sign));
+    } else if (as(popc, o)->par.kind == KGLB && (c->glbs.items[as(popc, o)->par.val.r.i].flags & FDEFINED) == 0)
+        addDgnLoc(c, EDEFNOTFOUND, as(popc, o)->par.val.r.loc, cptrify(c->glbs.items[as(popc, o)->par.val.r.i].name.sign));
+    else if (as(popc, o)->par.kind == KARG && (c->funs.items[f].args.items[as(popc, o)->par.val.r.i].flags & FDEFINED) == 0)
+        addDgnLoc(c, EDEFNOTFOUND, as(popc, o)->par.val.r.loc,
+                  c->funs.items[f].args.items[as(popc, o)->par.val.r.i].name.sign.len == 0 ?
+                  strcat("#", utos(as(popc, o)->par.val.r.i)) :
+                  cptrify(c->funs.items[f].args.items[as(popc, o)->par.val.r.i].name.sign));
+    else if (as(popc, o)->par.kind == KLOC && (c->funs.items[f].locs.items[as(popc, o)->par.val.r.i].flags & FDEFINED) == 0)
+        addDgnLoc(c, EDEFNOTFOUND, as(popc, o)->par.val.r.loc,
+                  c->funs.items[f].locs.items[as(popc, o)->par.val.r.i].name.sign.len == 0 ?
+                  strcat("`", utos(as(popc, o)->par.val.r.i)) :
+                  cptrify(c->funs.items[f].locs.items[as(popc, o)->par.val.r.i].name.sign));
+}
+void linkBody(context* c, list(opcPtr) b, u f, i64* s) {
+    for (u i = 0; i < b.len; i++) {
+        if (OPS[b.items[i]->op].arg != FNONE)
+            linkParam(c, b.items[i], f);
+        if (OPS[b.items[i]->op].link != NULL)
+            (*OPS[b.items[i]->op].link)(c, b.items[i], f, s);
+        if (OPS[b.items[i]->op].flags & FARGCRETC)
+            *s -= as(popc, b.items[i])->argc;
+        else if ((OPS[b.items[i]->op].flags & FHASBODY) == 0)
+            *s -= OPS[b.items[i]->op].argc;
+        if (*s < 0){
+            addDgnEmptyLoc(c, ESTACKLOW, b.items[i]->loc);
+            *s = 0;
         }
-    return s;
+        if (OPS[b.items[i]->op].flags & FARGCRETC)
+            *s += as(popc, b.items[i])->retc;
+        else if ((OPS[b.items[i]->op].flags & FHASBODY) == 0)
+            *s += OPS[b.items[i]->op].retc;
+        if ((b.items[i]->op == OPRET || b.items[i]->op == OPTHROW || b.items[i]->op == OPEXIT) && i != b.len - 1)
+            addDgnEmptyLoc(c, WUNREACHCODE, b.items[i + 1]->loc);
+    }
 }
 static void linkFun(context* c, list(funDef) funs) {
     for (u i = 0; i < funs.len; i++)
@@ -272,7 +225,8 @@ static void linkFun(context* c, list(funDef) funs) {
             linkVar(c, funs.items[i].args);
             linkVar(c, funs.items[i].locs);
             linkTypList(c, funs.items[i].ret);
-            u b = linkBody(c, funs.items[i].body, i, 0);
+            i64 b = 0;
+            linkBody(c, funs.items[i].body, i, &b);
             if (b > 0)
                 addDgnLoc(c, WSTACKHIGH, funs.items[i].name.loc, utos(b));
             funs.items[i].name.csign = getCsign(funs.items[i].name.sign);
@@ -284,6 +238,8 @@ static void linkFun(context* c, list(funDef) funs) {
                     c->main = i;
                 }
             }
+            if ((funs.items[i].flags & FREFERENCED) == 0)
+                addDgnLoc(c, MNOTREFERENCED, funs.items[i].name.loc, cptrify(funs.items[i].name.sign));
             funs.items[i].flags |= FLINKED;
         }
 }

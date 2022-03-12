@@ -336,19 +336,19 @@ typedef enum {
         return res;                                                     \
     }                                                                   \
     type##Set* type##AggregateNew(list(type) items) {                   \
-        set(type)* res = as(set(type), alloc(aggregate(type)));         \
+        set(type)* res = as(set(type), new(aggregate(type)));           \
         *as(aggregate(type), res) = type##AggregateDefault();           \
         as(aggregate(type), res)->items = items;                         \
         return res;                                                     \
     }                                                                   \
     type##Set* type##ComplementSetNew(set(type)* set) {                 \
-        set(type)* res = as(set(type), alloc(type##ComplementSet));     \
+        set(type)* res = as(set(type), new(type##ComplementSet));     \
         *as(type##ComplementSet, res) = type##ComplementSetDefault();   \
         as(type##ComplementSet, res)->orgnl = set;                       \
         return res;                                                     \
     }                                                                   \
     type##Set* type##CombinedSetNew(set(type)* left, set(type)* right, SETCOMBINATIONSTYLE style) { \
-        set(type)* res = as(set(type), alloc(type##CombinedSet));       \
+        set(type)* res = as(set(type), new(type##CombinedSet));       \
         *as(type##CombinedSet, res) = type##CombinedSetDefault();       \
         as(type##CombinedSet, res)->left = left;                         \
         as(type##CombinedSet, res)->right = right;                       \
@@ -413,7 +413,7 @@ typedef enum {
         return res;                                                     \
     }                                                                   \
     type##Set* type##RangeNew(type min, type max) {                     \
-        set(type)* res = as(set(type), alloc(range(type)));             \
+        set(type)* res = as(set(type), new(range(type)));             \
         *as(range(type), res) = type##RangeDefault();                   \
         as(range(type), res)->min = min;                                 \
         as(range(type), res)->max = max;                                 \
@@ -428,20 +428,9 @@ typedef enum {
         return left > right;                                            \
     }
 
-enum {
-    objectType,
-};
-#define objectDerive                            \
-    u TYPE
-typedef struct {
-    objectDerive;
-} object;
-void* newObject(u, u);
-#define new(type) ((type*)newObject(sizeof(type), type##Type))
-#define alloc(type) ((type*)malloc(sizeof(type)))
+#define new(type) ((type*)malloc(sizeof(type)))
 #define as(type, obj) ((type*)obj)
-#define is(type, obj) ((obj)->TYPE == type##Type)
-#define max(type) (2 << (sizeof(type) * 8 - 1))
+#define max(type) ((1 << (sizeof(type) * 8)) - 1)
 
 #define init(h) h##Init()//just to make it stand out
 

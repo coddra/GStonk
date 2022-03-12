@@ -1,6 +1,6 @@
 #include "h/diagnostics.h"
 
-const diagnDescr DIAGNOSTICS[DIAGNCOUNT] = {
+const dgnDscr DGNS[DGNCOUNT] = {
     { "",
         "missing token '{0}'",
         LVLERROR,
@@ -103,35 +103,40 @@ const diagnDescr DIAGNOSTICS[DIAGNCOUNT] = {
     { "mmultif",
         "'{0}' is included multiple times",
         LVLMESSAGE,
+    },
+
+    { "mnotref",
+        "'{0}' is defined, but never referenced",
+        LVLMESSAGE,
     }
 };
 
-void addDgnMultiLoc(context* c, DIAGNKIND desc, loc loc, list(charPtr) params) {
-    diagn d = { desc, loc, params };
-    diagnListAdd(&c->dgns, d);
+void addDgnMultiLoc(context* c, DGNKIND desc, loc loc, list(charPtr) params) {
+    dgn d = { desc, loc, params };
+    dgnListAdd(&c->dgns, d);
 }
-void addDgnLoc(context* c, DIAGNKIND desc, loc loc, char* param) {
+void addDgnLoc(context* c, DGNKIND desc, loc loc, char* param) {
     list(charPtr) ps = charPtrListDefault();
     charPtrListAdd(&ps, param);
     addDgnMultiLoc(c, desc, loc, ps);
 }
-void addDgnMulti(context* c, DIAGNKIND desc, list(charPtr) params) {
+void addDgnMulti(context* c, DGNKIND desc, list(charPtr) params) {
     addDgnMultiLoc(c, desc, c->loc, params);
 }
-void addDgnEmpty(context* c, DIAGNKIND desc) {
+void addDgnEmpty(context* c, DGNKIND desc) {
     addDgnMultiLoc(c, desc, c->loc, charPtrListDefault());
 }
-void addDgnEmptyLoc(context* c, DIAGNKIND desc, loc loc) {
+void addDgnEmptyLoc(context* c, DGNKIND desc, loc loc) {
     addDgnMultiLoc(c, desc, loc, charPtrListDefault());
 }
-void addDgn(context* c, DIAGNKIND desc, char* param) {
+void addDgn(context* c, DGNKIND desc, char* param) {
     list(charPtr) ps = charPtrListDefault();
     charPtrListAdd(&ps, param);
     addDgnMultiLoc(c, desc, c->loc, ps);
 }
-string diagnToString(diagn d) {
-    string res = DIAGNOSTICS[d.descr].lvl == LVLERROR ? stringify("error: ") : DIAGNOSTICS[d.descr].lvl == LVLWARNING ? stringify("warning: ") : stringify("message: ");
-    addCptr(&res, DIAGNOSTICS[d.descr].msg);
+string dgnToString(dgn d) {
+    string res = DGNS[d.descr].lvl == LVLERROR ? stringify("error: ") : DGNS[d.descr].lvl == LVLWARNING ? stringify("warning: ") : stringify("message: ");
+    addCptr(&res, DGNS[d.descr].msg);
     for (u i = 0; i < d.params.len; i++)
         replaceAllCptr(&res, concat(concat("{", utos(i)), "}"), d.params.items[i]);
     addCptr(&res, "\n");
@@ -143,9 +148,9 @@ string diagnToString(diagn d) {
         addCptr(&res, ", column: ");
         addCptr(&res, utos(d.loc.cl));
     }
-    if ((DIAGNOSTICS[d.descr].lvl & (LVLWARNING | LVLMESSAGE)) != 0) {
+    if ((DGNS[d.descr].lvl & (LVLWARNING | LVLMESSAGE)) != 0) {
         addCptr(&res, " (-");
-        addCptr(&res, DIAGNOSTICS[d.descr].id);
+        addCptr(&res, DGNS[d.descr].id);
         addCptr(&res, ")");
     }
     stringAdd(&res, '\n');
@@ -153,11 +158,11 @@ string diagnToString(diagn d) {
 }
 void printDgns(context* c) {
     for (size_t i = 0; i < c->dgns.len; i++)
-        if (!((c->flags & FIGNOREMSGS) != 0 && DIAGNOSTICS[c->dgns.items[i].descr].lvl == LVLMESSAGE || (c->flags & FIGNOREWRNGS) != 0 && DIAGNOSTICS[c->dgns.items[i].descr].lvl == LVLWARNING || uListContains(c->ignoreDgns, c->dgns.items[i].descr)))
-            puts(cptrify(diagnToString(c->dgns.items[i])));
+        if (!((c->flags & FIGNOREMSGS) != 0 && DGNS[c->dgns.items[i].descr].lvl == LVLMESSAGE || (c->flags & FIGNOREWRNGS) != 0 && DGNS[c->dgns.items[i].descr].lvl == LVLWARNING || uListContains(c->ignoreDgns, c->dgns.items[i].descr)))
+            puts(cptrify(dgnToString(c->dgns.items[i])));
 }
 bool checkErr(context* c) {
     size_t i;
-    for (i = 0; i < c->dgns.len && DIAGNOSTICS[c->dgns.items[i].descr].lvl != LVLERROR; i++);
+    for (i = 0; i < c->dgns.len && DGNS[c->dgns.items[i].descr].lvl != LVLERROR; i++);
     return i < c->dgns.len;
 }

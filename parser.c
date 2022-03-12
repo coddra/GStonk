@@ -400,19 +400,27 @@ static bool parsePar(context* c, par* res, AFLAG kind, u r) {
         res->kind = KGLB;
     else if ((kind & FLOC) > 0 && parseC(c, '`')) {
         res->val.r.loc = c->loc;
-        if (!parseUL(c, &res->val.r.i) && !parseVar(c, &res->val.r, &c->funs.items[r].locs))
+        if (parseUL(c, &res->val.r.i)) {
+            if (res->val.r.i >= c->funs.items[r].locs.len)
+                addDgn(c, EARGOUTOFRANGE, "local variable number");
+            else
+                c->funs.items[r].locs.items[res->val.r.i].flags |= FREFERENCED;
+        } else if (parseVar(c, &res->val.r, &c->funs.items[r].locs))
+            c->funs.items[r].locs.items[res->val.r.i].flags |= FREFERENCED;
+        else
             addDgn(c, EMISSINGSYNTAX, "index or name of local variable");
-        if (res->val.r.i >= c->funs.items[r].locs.len || (c->funs.items[r].locs.items[res->val.r.i].flags & FDEFINED) == 0)
-            addDgn(c, EARGOUTOFRANGE, "local variable number");
-        c->funs.items[r].locs.items[res->val.r.i].flags |= FREFERENCED;
         res->kind = KLOC;
     } else if ((kind & FARG) > 0 && parseC(c, '#')) {
         res->val.r.loc = c->loc;
-        if (!(parseUL(c, &res->val.r.i) || parseVar(c, &res->val.r, &c->funs.items[r].args)))
+        if (parseUL(c, &res->val.r.i)) {
+            if (res->val.r.i >= c->funs.items[r].args.len)
+                addDgn(c, EARGOUTOFRANGE, "argument number");
+            else
+                c->funs.items[r].args.items[res->val.r.i].flags |= FREFERENCED;
+        } else if (parseVar(c, &res->val.r, &c->funs.items[r].args))
+            c->funs.items[r].args.items[res->val.r.i].flags |= FREFERENCED;
+        else
             addDgn(c, EMISSINGSYNTAX, "index or name of argument");
-        if (res->val.r.i >= c->funs.items[r].args.len || (c->funs.items[r].args.items[res->val.r.i].flags & FDEFINED) == 0)
-            addDgn(c, EARGOUTOFRANGE, "argument number");
-        c->funs.items[r].args.items[res->val.r.i].flags |= FREFERENCED;
         res->kind = KARG;
     } else if ((kind & FDOUB) > 0 && parseDL(c, &res->val.d))
         res->kind = KDOUB;
@@ -481,7 +489,7 @@ static bool parseVarDef(context* c, varDef* res) {
     stringAddRange(&res->name.sign, n.sign);
     res->type.loc = n.loc;
     res->type.i = getTyp(c, n.sign, true);
-    res->flags = FDEFINED;
+    res->flags |= FDEFINED;
     parseAllCS(c, whitespace);
     parseAttList(c, &res->attrs);
     return true;
@@ -514,16 +522,12 @@ static bool parseVarList(context* c, list(varDef)* res) {
     return c->loc.cr != o.cr;
 }
 
-static inline bool parseOP(context* c, OP op) {
-    return parseCptr(c, OPS[op].code) || parseCptr(c, OPS[op].alias);
-}
 static bool parseOPC(context* c, opc** res, u r) {
     loc o = c->loc;
     if (!parseC(c, '.') || !parseAllCS(c, letters))
             parseAllCS(c, opSymbols);
-    loc p = c->loc;
-    if (charSetContains(modifiers, c->text.items[c->loc.cr - 1]) && parseUL(c, NULL)) {
-        c->loc = p;
+    if (charSetContains(modifiers, c->text.items[c->loc.cr - 1]) && parseCS(c, notWhitespace)) {
+        prev(c);
         prev(c);
     }
     string s = codeFrom(c, o);
@@ -586,14 +590,15 @@ static bool parseOPC(context* c, opc** res, u r) {
             addDgn(c, EMISSINGSYNTAX, "body of control statement");
         if (op == OPIF || op == OPTRY) {
             parseAllCS(c, whitespace);
-            if (parseOP(c, OPELSE)) {
+            if (parseCptr(c, "|>") || parseCptr(c, ".else")) {
                 parseAllCS(c, whitespace);
                 if (!parseBody(c, &as(bopc, *res)->body2, r))
                     addDgn(c, EMISSINGSYNTAX, "body of else branch");
             } else if (op == OPIF) {
                 bopc* last = as(bopc, *res);
-                bopc* elif = new(bopc);
-                while (parseOP(c, OPELIF)) {
+                bopc* elif;
+                while (parseCptr(c, "|?") || parseCptr(c, ".elif")) {
+                    elif = new(bopc);
                     parseHead(c, &elif->head, r);
                     parseAllCS(c, whitespace);
                     if (!parseBody(c, &elif->body, r))
@@ -603,9 +608,8 @@ static bool parseOPC(context* c, opc** res, u r) {
                     last->body2 = opcPtrListDefault();
                     opcPtrListAdd(&as(bopc, last)->body2, as(opc, elif));
                     last = elif;
-                    elif = new(bopc);
                 }
-                if (parseOP(c, OPELSE)) {
+                if (parseCptr(c, "|>") || parseCptr(c, ".else")) {
                     parseAllCS(c, whitespace);
                     if (!parseBody(c, &as(bopc, *res)->body2, r))
                         addDgn(c, EMISSINGSYNTAX, "body of else branch");

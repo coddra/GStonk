@@ -1,12 +1,6 @@
 #include "h/shorts.h"
 #include <unistd.h>
 
-void* newObject(u size, u TYPE) {
-    object* res = malloc(size);
-    res->TYPE = TYPE;
-    return res;
-}
-
 listDefineDefault(u);
 listDefineVaListInt(u);
 listDefineDefault(char);
