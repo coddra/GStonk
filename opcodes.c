@@ -724,7 +724,7 @@ const opcDef OPS[] = {
     },
 
     { OPLDAT,
-        "@->", ".ldat",
+        "@", ".ldat",
         1, 1,
         "",
         &linkLDAT,
@@ -733,7 +733,7 @@ const opcDef OPS[] = {
     },
 
     { OPSTAT,
-        "->@", ".stat",
+        ">", ".stat",
         2, 0,
         "",
         &linkSTAT,
@@ -742,7 +742,7 @@ const opcDef OPS[] = {
     },
 
     { OPCLAT,
-        "!@", ".clat",
+        "(@)", ".clat",
         0, 1,
         "\tpopq\t\t%rax\n"
         "\tcall\t\t*%rax\n",
@@ -770,7 +770,7 @@ const opcDef OPS[] = {
     },
 
     { OPST,
-        "->", ".store",
+        ">", ".store",
         1, 0,
         "",
         NULL,

@@ -34,16 +34,16 @@ Syntax explanations will be added later, in the meantime, be content with the ex
         "0" <<|
     }
 
-    28 .malloc ** ** ->`0 1 ->@8 8 + ->`1
+    28 .malloc ** ** >`0 1 >string->length::u8 8 + >`1
 
     9 @@ ** #0 < {
         10 * 9 +
-        `0 ** @->8 ++ ->@8
-        `1 ++ ->`1
+        `0 ** @8 ++ >8
+        `1 ++ >`1
     } \\
 
     #0 @@ ** 0 > {
-        10 /% 48 + `1 ** -- ->`1 <> ->@1
+        10 /% 48 + `1 ** -- >`1 <> >1
     } \\
 
     `0 <<|
