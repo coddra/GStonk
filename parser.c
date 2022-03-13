@@ -24,6 +24,7 @@ set(char)* charLiteral = NULL;
 set(char)* notWhitespace = NULL;
 set(char)* opSymbols = NULL;
 set(char)* modifiers = NULL;
+set(char)* token = NULL;
 
 const int tabWidth = 4;
 
@@ -42,6 +43,7 @@ void init(PARSER) {
     notWhitespace = charSetComplement(whitespace);
     opSymbols = charAggregateFromArray("~!@$%^&*()-_=+\\|:;,<.>/?`#", 27);
     modifiers = charAggregateFromArray("-`#", 3);
+    token = charSetSubstract(notWhitespace, charAggregateFromArray("{}", 2));
 }
 
 static bool next(context* c) {
@@ -526,6 +528,13 @@ static bool parseVarList(context* c, list(varDef)* res) {
     return c->loc.cr != o.cr;
 }
 
+static bool parseToken(context* c) {
+    loc o = c->loc;
+    bool res = parseAllCS(c, token);
+    if (res)
+        addDgnLoc(c, EUNRECTOKEN, o, cptrify(codeFrom(c, o)));
+    return res;
+}
 static bool parseOPC(context* c, opc** res, u r) {
     loc o = c->loc;
     if (!parseC(c, '.') || !parseAllCS(c, letters))
@@ -630,9 +639,14 @@ static bool parseHead(context* c, list(opcPtr)* res, u r) {
         return false;
     opcPtrListAdd(res, op);
     parseAllCS(c, whitespace);
-    while (parseOPC(c, &op, r)) {
-        opcPtrListAdd(res, op);
-        parseAllCS(c, whitespace);
+    bool t = true;
+    while (t) {
+        if (parseOPC(c, &op, r))
+            opcPtrListAdd(res, op);
+        else
+            t = parseToken(c);
+        if (t)
+            parseAllCS(c, whitespace);
     }
     return true;
 }
