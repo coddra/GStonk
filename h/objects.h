@@ -32,7 +32,7 @@ typedef enum {
     FUINT   = 1 << (KUINT - 1),
     FDOUB   = 1 << (KDOUB - 1),
     FSTR    = 1 << (KSTR - 1),
-    FANY    = FFUN | FTYP | FGLB | FLOC | FARG | FINT | FUINT | FDOUB | FSTR,
+    FANY    = FFUN | FTYP | FGLB | FFLD | FLOC | FARG | FINT | FUINT | FDOUB | FSTR,
 } AFLAG;//argument flag
 typedef enum {
     FNOFLAGS      = 0,
