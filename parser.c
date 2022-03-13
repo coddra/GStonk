@@ -293,22 +293,23 @@ static bool parseTypList(context* c, string* res, list(ref) *refs) {
     return true;
 }
 static bool parseFunIdfr(context* c, name* res) {
+    loc o = c->loc;
     if (!parseIdfr(c, res))
         return false;
     name n = nameDefault();
+    if (!parseC(c, '(')) {
+        c->loc = o;
+        return false;
+    }
     if (res)
         stringAdd(&res->sign, '(');
-    if (!parseC(c, '('))
-        addDgn(c, EMISSINGSYNTAX, "argument list of function");
-    else {
-        parseAllCS(c, whitespace);
-        if (parseTypList(c, &n.sign, NULL) && res)
-            stringAddRange(&res->sign, n.sign);
-        if (res)
-            stringAdd(&res->sign, ')');
-        if (!parseC(c, ')'))
-            addDgn(c, EMISSINGTOKEN, ")");
-    }
+    parseAllCS(c, whitespace);
+    if (parseTypList(c, &n.sign, NULL) && res)
+        stringAddRange(&res->sign, n.sign);
+    if (res)
+        stringAdd(&res->sign, ')');
+    if (!parseC(c, ')'))
+        addDgn(c, EMISSINGTOKEN, ")");
     if (res) {
         stringAdd(&res->sign, ':');
         stringAdd(&res->sign, ':');
@@ -320,14 +321,17 @@ static bool parseFunIdfr(context* c, name* res) {
     return true;
 }
 static bool parseVarIdfr(context* c, name* res) {
+    loc o = c->loc;
     if (!parseIdfr(c, res))
         return false;
+    if (!parseCptr(c, "::")) {
+        c->loc = o;
+        return false;
+    }
     if (res) {
         stringAdd(&res->sign, ':');
         stringAdd(&res->sign, ':');
     }
-    if (!parseCptr(c, "::"))
-        addDgn(c, EMISSINGTOKEN, "::");
     name n = nameDefault();
     if (!parseTypIdfr(c, &n))
         addDgn(c, EMISSINGSYNTAX, "type identifier");
@@ -387,6 +391,8 @@ static bool parsePar(context* c, par* res, AFLAG kind, u r) {
     res->loc = c->loc;
     if ((kind & FFUN) > 0 && parseFun(c, &res->val.r))
         res->kind = KFUN;
+    else if ((kind & FGLB) > 0 && parseGlb(c, &res->val.r))
+        res->kind = KGLB;
     else if (((kind & FTYP) > 0 || (kind & FFLD) > 0) && parseTyp(c, &res->val.r)) {
         if ((kind & FFLD) > 0 && parseCptr(c, "->")) {
             if (!parseVar(c, &res[1].val.r, &c->typs.items[res->val.r.i].flds))
@@ -396,8 +402,6 @@ static bool parsePar(context* c, par* res, AFLAG kind, u r) {
         } else
             res->kind = KTYP;
     }
-    else if ((kind & FGLB) > 0 && parseGlb(c, &res->val.r))
-        res->kind = KGLB;
     else if ((kind & FLOC) > 0 && parseC(c, '`')) {
         res->val.r.loc = c->loc;
         if (parseUL(c, &res->val.r.i)) {
