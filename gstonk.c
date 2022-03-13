@@ -9,6 +9,7 @@ char* OFLAG = "-o";
 char* MFLAG = "-m";
 char* WFLAG = "-w";
 char* GDBFLAG = "-gdb";
+char* ASMFLAG = "-s";
 
 void parseArgs(context* c, list(string) args) {
     for (u i = 0; i < args.len; i++) {
@@ -29,6 +30,8 @@ void parseArgs(context* c, list(string) args) {
                 uListAdd(&c->ignoreDgns, getDgn(substring(args.items[i], 1)));
         } else if (stringEquals(args.items[i], statstr(GDBFLAG)))
             c->flags |= FGDB;
+        else if (stringEquals(args.items[i], statstr(ASMFLAG)))
+            c->flags |= FASM;
         else
             addFile(c, args.items[i]);
     }
@@ -57,17 +60,28 @@ int main(int argc, char** args) {
     exitOnError(&c);
     link(&c);
     exitOnError(&c);
-    printDgns(&c);
 
-    string tmp = stringClone(c.output);
-    addCptr(&tmp, ".s");
-    writeAllText(tmp, compile(&c));
-    tmp.len = 0;
-    addCptr(&tmp, "gcc ");
-    stringAddRange(&tmp, c.output);
-    addCptr(&tmp, ".s -o ");
-    stringAddRange(&tmp, c.output);
+    string out;
+    if (c.flags & FASM) {
+        out = stringClone(c.output);
+        addCptr(&out, ".s");
+    } else {
+        out = absolutePath(stringify(args[0]));
+        u pos = stringLastPos(out, '/') + 1;
+        stringRemoveRange(&out, pos, out.len - pos);
+        addCptr(&out, "out.s");
+    }
+    writeAllText(out, compile(&c));
+    string cmd = stringify("gcc ");
+    stringAddRange(&cmd, out);
+    addCptr(&cmd, " -o ");
+    stringAddRange(&cmd, c.output);
     if (c.flags & FGDB)
-        addCptr(&tmp, " -ggdb -g3");
-    system(cptrify(tmp));
+        addCptr(&out, " -ggdb -g3");
+    int res = system(cptrify(cmd));
+    if (res)
+        addDgn(&c, EGCCFAILED, utos(res));
+    if ((c.flags & FASM) == 0)
+        remove(cptrify(out));
+    printDgns(&c);
 }

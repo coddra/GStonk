@@ -77,6 +77,10 @@ const dgnDscr DGNS[DGNCOUNT] = {
         "wrong kind of parameter provided for '{0}'",
         LVLERROR,
     },
+    { "",
+        "gcc returned exit status '{0}'",
+        LVLERROR,
+    },
 
     { "wnosize",
         "no size attribute is specified for this type",

@@ -50,6 +50,7 @@ typedef enum {
     FSINGLE       = 1 << 9,
     FARGCRETC     = 1 << 10,
     FHASBODY      = 1 << 11,
+    FASM          = 1 << 12,
 } FLAGS;//flags
 typedef enum {
     OPADD,    OPADDF,   OPINC,
@@ -123,6 +124,7 @@ typedef enum {
     EFILENOTEXIST,
     ENOPAR,
     EWRONGPAR,
+    EGCCFAILED,
 
     WNOSIZE,
     WSTACKHIGH,

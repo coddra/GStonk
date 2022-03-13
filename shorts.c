@@ -70,6 +70,12 @@ void stringRemoveAll(string* str, char c) {
 void stringReplaceAll(string* str, string old, string repl) {
     charListReplaceAll(str, old, repl);
 }
+u stringPos(string str, char c) {
+    return charListPos(str, c);
+}
+u stringLastPos(string str, char c) {
+    return charListLastPos(str, c);
+}
 bool stringEquals(string str, string other) {
     return charListEquals(str, other);
 }

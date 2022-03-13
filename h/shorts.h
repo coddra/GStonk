@@ -51,7 +51,9 @@ typedef double d;
     bool type##ListStartsWith(list(type) list, list(type) other);       \
     bool type##ListEndsWith(list(type) list, list(type) other);         \
     void type##ListRemoveAll(list(type)* list, type item);              \
-    void type##ListReplaceAll(list(type)* list, list(type) original, list(type) replacement)
+    void type##ListReplaceAll(list(type)* list, list(type) original, list(type) replacement); \
+    u type##ListPos(list(type) list, type item);                        \
+    u type##ListLastPos(list(type) list, type item);
 #define listDeclareDefault(type)                                        \
     listDeclareEquals(type);                                            \
     bool type##Equals(type left, type right)
@@ -245,6 +247,18 @@ typedef double d;
             type##ListRemoveRange(list, indexes.items[indexes.len - 1 - i], original.len); \
             type##ListInsertRange(list, replacement, indexes.items[indexes.len - 1 - i]); \
         }                                                               \
+    }                                                                   \
+    u type##ListPos(list(type) list, type item) {                      \
+        u i = 0;                                                        \
+        for (; i < list.len && !type##Equals(list.items[i], item); i++); \
+        return i;                                                       \
+    }                                                                   \
+    u type##ListLastPos(list(type) list, type item) {                  \
+        u i = list.len;                                                 \
+        for (; i > 0 && !type##Equals(list.items[i - 1], item); i--);   \
+        if (i == 0)                                                      \
+            return list.len;                                            \
+        return i - 1;                                                   \
     }
 #define listDefineDefault(type)                                         \
     listDefineEquals(type)                                              \
@@ -462,6 +476,8 @@ bool stringStartsWith(string str, string other);
 bool stringEndsWith(string str, string other);
 void stringRemoveAll(string* str, char c);
 void stringReplaceAll(string* str, string old, string repl);
+u stringPos(string str, char c);
+u stringLastPos(string str, char c);
 bool stringEquals(string str, string other);
 string substring(string str, u index);
 string stringify(char* str);
