@@ -18,7 +18,6 @@ set(char)* octDigits = NULL;
 set(char)* specialChars = NULL;
 set(char)* escChars = NULL;
 set(char)* newLine = NULL;
-set(char)* stringCloser = NULL;
 set(char)* stringLiteral = NULL;
 set(char)* charLiteral = NULL;
 set(char)* notWhitespace = NULL;
@@ -37,7 +36,6 @@ void init(PARSER) {
     specialChars = charAggregateFromArray("_<>", 3);
     escChars = charAggregateFromArray("abfnrtv\'\"\\?", 11);
     newLine = charAggregateFromVaList(1, '\n');//preprocessor will normalize line endings
-    stringCloser = charAggregateFromArray("\"\n", 2);
     stringLiteral = charSetComplement(charAggregateFromArray("\n\\\"", 3));
     charLiteral = charSetComplement(charAggregateFromArray("\n\\\'", 3));
     notWhitespace = charSetComplement(whitespace);
@@ -109,19 +107,6 @@ static bool parseCptr(context* c, char* s) {
     return false;
 }
 
-static inline bool lookingAtC(context* c, char ch) {
-    return neof(c) && c->text.items[c->loc.cr] == ch;
-}
-static inline bool nlookingAtC(context* c, char ch) {
-    return neof(c) && !(c->text.items[c->loc.cr] == ch);
-}
-static inline bool lookingAtCS(context* c, set(char)* cs) {
-    return neof(c) && charSetContains(cs, c->text.items[c->loc.cr]);
-}
-static inline bool nlookingAtCS(context* c, set(char)* cs) {
-    return neof(c) && !charSetContains(cs, c->text.items[c->loc.cr]);
-}
-
 static bool parseHex(context* c, u64* res, u8 digits) {
     loc o = c->loc;
     if (digits == 0){
@@ -145,8 +130,7 @@ static bool parseES(context* c, char* res) {
     if (parseCSR(c, escChars, &r)) {
         if (res)
             *res = getEscChar(r);
-    }
-    else if (parseC(c, 'x') || parseC(c, 'X')) {
+    } else if (parseC(c, 'x') || parseC(c, 'X')) {
         u64 h = 0;
         if (!parseHex(c, &h, 2))
             addDgn(c, EUNRECESCSEQ, cptrify(codeFrom(c, o)));
@@ -214,22 +198,24 @@ static bool parseDL(context* c, d* res) {
 }
 static bool parseSL(context* c, ref* res) {
     string s = stringDefault();
-    if (!parseC(c, '"'))
-        return false;
     if (res)
         res->loc = c->loc;
-    while (neof(c) && !lookingAtCS(c, stringCloser))
-        if (res) {
-            char r;
-            loc o = c->loc;
-            if (parseCC(c, &r, true))
-                stringAdd(&s, r);
-            else
-                addDgn(c, EUNRECTOKEN, cptrify(codeFrom(c, o)));
-        } else
-            parseCC(c, NULL, true);
     if (!parseC(c, '"'))
-        addDgn(c, EMISSINGTOKEN, "\"");
+        return false;
+    char r;
+    bool dotflag = true;
+    while (dotflag) {
+        while (parseCC(c, &r, true))
+            stringAdd(&s, r);
+        if (!parseC(c, '"'))
+            addDgn(c, EMISSINGTOKEN, "\"");
+        dotflag = parseC(c, '.');
+        if (dotflag) {
+            parseAllCS(c, whitespace);
+            if (!parseC(c, '"'))
+                addDgn(c, EMISSINGTOKEN, "\"");
+        }
+    }
     if (res)
         res->i = c->strs.len;
     stringListAdd(&c->strs, s);
@@ -251,13 +237,11 @@ static bool parseIdfr(context* c, name* res) {
         res->loc = c->loc;
     if (!parseName(c, NULL))
         return false;
-    loc o = c->loc;
-    while (parseC(c, '.') && parseName(c, NULL))
-        o = c->loc;
-    if (lookingAtC(c, '.'))
-        c->loc = o;
+    while (parseC(c, '.') && parseName(c, NULL));
+    if (c->text.items[c->loc.cr - 1] == '.')
+        prev(c);
     if (res)
-        res->sign = stringGetRange(c->text, res->loc.cr, c->loc.cr - res->loc.cr);
+        res->sign = codeFrom(c, res->loc);
     return true;
 }
 
