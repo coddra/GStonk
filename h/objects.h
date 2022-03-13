@@ -32,7 +32,9 @@ typedef enum {
     FUINT   = 1 << (KUINT - 1),
     FDOUB   = 1 << (KDOUB - 1),
     FSTR    = 1 << (KSTR - 1),
+    FFILE   = 1 << KSTR,
     FANY    = FFUN | FTYP | FGLB | FFLD | FLOC | FARG | FINT | FUINT | FDOUB | FSTR,
+    FATTANY = FFUN | FTYP | FGLB | FINT | FUINT | FDOUB | FSTR,
 } AFLAG;//argument flag
 typedef enum {
     FNOFLAGS      = 0,
@@ -98,7 +100,8 @@ typedef enum {
 typedef enum {
     ATTSIGNED,
     ATTMAIN,
-    ATTCOUNT
+    ATTUSE,
+    ATTCOUNT,
 } ATTKIND;
 typedef enum {
     EMISSINGTOKEN,
@@ -156,11 +159,10 @@ typedef struct par_s {
     upar val;
 } par;//compiletime parameter of operation or attribute
 
-listDeclare(par);
 typedef struct att_s {
     loc       loc;
     ATTKIND   kind;
-    list(par) prms;
+    par       par;
     FLAGS     flags;
 } att;//attribute
 
@@ -206,6 +208,7 @@ typedef struct attDef_s {
     char* name;
     AFLAG arg;
     FLAGS flags;
+    AFLAG trgt;
 } attDef;
 
 listDeclare(ref);
@@ -261,19 +264,20 @@ listDeclare(funDef);
 listDeclare(dgn);
 listDeclareEquals(string);
 typedef struct context_s {
-    string text;
-    loc loc;
-    u64 addr;
+    string       text;
+    loc          loc;
+    u64          addr;
     list(funDef) funs;
     list(typDef) typs;
     list(varDef) glbs;
     list(string) strs;
-    list(dgn)  dgns;
-    list(u) ignoreDgns;
-    u main;
+    list(dgn)    dgns;
+    list(u)      ignoreDgns;
+    list(att)    atts;
+    u            main;
     list(string) inputs;
-    string output;
-    FLAGS flags;
+    string       output;
+    FLAGS        flags;
 } context;//i don't think i have to explain this
 
 

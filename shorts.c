@@ -183,3 +183,6 @@ void writeAllText(string file, string text) {
 bool fileExists(string file) {
     return access(cptrify(file), F_OK) == 0;
 }
+string absolutePath(string path) {
+    return stringify(realpath(cptrify(path), NULL));
+}

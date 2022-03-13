@@ -1,6 +1,5 @@
 #include "h/objects.h"
 
-listDefine(par);
 listDefine(opcPtr);
 listDefine(att);
 listDefine(varDef);
@@ -17,12 +16,19 @@ listDefineEquals(string);
 const attDef ATTRIBUTES[ATTCOUNT] = {
     { "signed",
         FNONE,
-        FSINGLE
+        FSINGLE,
+        FFLD,
     },
     { "main",
         FNONE,
-        FSINGLE
-    }
+        FSINGLE,
+        FFUN,
+    },
+    { "use",
+        FSTR,
+        FNOFLAGS,
+        FFILE,
+    },
 };
 
 loc locDefault() {
@@ -43,7 +49,7 @@ ref refDefault() {
 att attDefault() {
     att res = { 0 };
     res.loc = locDefault();
-    res.prms = parListDefault();
+    res.par = parDefault();
     return res;
 }
 opc opcDefault() {
@@ -124,6 +130,7 @@ context contextDefault() {
     res.glbs = varDefListDefault();
     res.ignoreDgns = uListDefault();
     res.inputs = stringListDefault();
+    res.atts = attListDefault();
     res.output = stringDefault();
     res.strs = stringListDefault();
     res.text = stringDefault();

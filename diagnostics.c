@@ -74,7 +74,7 @@ const dgnDscr DGNS[DGNCOUNT] = {
         LVLERROR,
     },
     { "",
-        "wrong kind of parameter provided for opcode '{0}'",
+        "wrong kind of parameter provided for '{0}'",
         LVLERROR,
     },
 

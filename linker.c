@@ -125,6 +125,18 @@ bool isGOP(context* c, string code, par* pars, OP* op) {
     return false;
 }
 
+void addFile(context* c, string path) {
+    if (fileExists(path)) {
+        u i = 0;
+        for (; i < c->inputs.len && !stringEquals(absolutePath(path), absolutePath(c->inputs.items[i])); i++);
+        if (i == c->inputs.len)
+            stringListAdd(&c->inputs, path);
+        else if (c->loc.file.len == 0)
+            addDgn(c, MMULTIFILE, cptrify(path));
+    } else
+        addDgn(c, EFILENOTEXIST, cptrify(path));
+}
+
 static void linkAtt(context* c, list(att) atts) {
     list(u) ul = {0};
     if (ul.cap == 0)

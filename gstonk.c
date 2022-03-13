@@ -29,16 +29,8 @@ void parseArgs(context* c, list(string) args) {
                 uListAdd(&c->ignoreDgns, getDgn(substring(args.items[i], 1)));
         } else if (stringEquals(args.items[i], statstr(GDBFLAG)))
             c->flags |= FGDB;
-        else {
-            if (fileExists(args.items[i])) {
-                if (stringListContains(c->inputs, args.items[i]))
-                    addDgn(c, MMULTIFILE, cptrify(args.items[i]));
-                else
-                    stringListAdd(&c->inputs, args.items[i]);
-            }
-            else
-                addDgn(c, EFILENOTEXIST, cptrify(args.items[i]));
-        }
+        else
+            addFile(c, args.items[i]);
     }
     if (c->inputs.len == 0)
         addDgnEmpty(c, ENOINPUT);

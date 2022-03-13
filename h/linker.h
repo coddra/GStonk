@@ -16,7 +16,10 @@ ATTKIND getAtt(string sign);
 DGNKIND getDgn(string sign);
 u getVar(list(varDef)* l, string sign, bool r);
 
+AFLAG kindToFlag(AKIND k);
 bool isGOP(context* c, string code, par* pars, OP* op);
+
+void addFile(context* c, string path);
 
 void linkBody(context* c, list(opcPtr) b, u f, i64* s);
 void link(context* c);

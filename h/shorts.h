@@ -482,5 +482,6 @@ char* ctcptr(char c);
 string readAllText(string file);
 void writeAllText(string file, string text);
 bool fileExists(string file);
+string absolutePath(string path);
 
 #endif //SHORTS_H

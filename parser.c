@@ -435,13 +435,19 @@ static bool parseAtt(context* c, att* res) {
     if (res->kind == ATTCOUNT)
         addDgnLoc(c, EUNRECATT, res->loc, cptrify(codeFrom(c, res->loc)));
     parseAllCS(c, whitespace);
-    if (!parseC(c, '('))
-        return true;
-    if (ATTRIBUTES[res->kind].arg != FNONE) {
-        par p;
-        if (!parsePar(c, &p, ATTRIBUTES[res->kind].arg, 0))
+    if (!parseC(c, '(')) {
+        if (ATTRIBUTES[res->kind].arg != FNONE)
             addDgn(c, EMISSINGSYNTAX, "parameter for attribute");
+        return true;
     }
+    par p;
+    if (parsePar(c, &p, FATTANY, 0)) {
+        if (ATTRIBUTES[res->kind].arg & kindToFlag(p.kind))
+            res->par = p;
+        else
+            addDgnLoc(c, EWRONGPAR, p.loc, ATTRIBUTES[res->kind].name);
+    } else if (ATTRIBUTES[res->kind].arg != FNONE)
+        addDgn(c, EMISSINGSYNTAX, "parameter for attribute");
     if (!parseC(c, ')'))
         addDgn(c, EMISSINGTOKEN, ")");
     return true;
@@ -645,7 +651,7 @@ static bool parseBody(context* c, list(opcPtr)* res, u r) {
 }
 
 static bool parseGlbDef(context* c) {
-    if (!parseCptr(c, "[]"))
+    if (!parseCptr(c, "<>"))
         return false;
     varDef v = varDefDefault();
     if (!parseVarDef(c, &v))
@@ -767,13 +773,22 @@ void parse(context* c) {
         c->loc.ln = 1;
         c->loc.cr = 0;
         preprocess(c);
-        while(neof(c)) {
+        parseAllCS(c, whitespace);
+        attList a = attListDefault();
+        if (parseAttList(c, &a)) {
+            for (u i = 0; i < a.len; i++)
+                if (a.items[i].kind == ATTUSE && a.items[i].par.kind == KSTR)
+                    addFile(c, c->strs.items[a.items[i].par.val.r.i]);
+            attListAddRange(&c->atts, a);
             parseAllCS(c, whitespace);
+        }
+        while(neof(c)) {
             if (!(parseFunDef(c) || parseTypDef(c) || parseGlbDef(c))) {
                 loc o = c->loc;
-                if (parseAllNot(c, whitespace))
-                    addDgnLoc(c, EUNRECTOKEN, o, cptrify(codeFrom(c, o)));
+                parseAllNot(c, whitespace);
+                addDgnLoc(c, EUNRECTOKEN, o, cptrify(codeFrom(c, o)));
             }
+            parseAllCS(c, whitespace);
         }
     }
     c->loc.file.len = 0;
