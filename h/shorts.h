@@ -50,6 +50,7 @@ typedef double d;
     bool type##ListEquals(list(type) list, list(type) other);           \
     bool type##ListStartsWith(list(type) list, list(type) other);       \
     bool type##ListEndsWith(list(type) list, list(type) other);         \
+    void type##ListRemoveAll(list(type)* list, type item);              \
     void type##ListReplaceAll(list(type)* list, list(type) original, list(type) replacement)
 #define listDeclareDefault(type)                                        \
     listDeclareEquals(type);                                            \
@@ -225,6 +226,11 @@ typedef double d;
     }                                                                   \
     bool type##ListEndsWith(list(type) list, list(type) other) { \
         return (other.len <= list.len) && type##ListRangeEquals(list, other, list.len - other.len); \
+    }                                                                   \
+    void type##ListRemoveAll(list(type)* list, type item) {             \
+        for (u i = list->len; i > 0; i--)                                \
+            if (type##Equals(list->items[i - 1], item))                  \
+                type##ListRemove(list, i - 1);                          \
     }                                                                   \
     void type##ListReplaceAll(list(type)* list, list(type) original, list(type) replacement) { \
         if (original.len == 0 || list->len < original.len)                \
@@ -454,6 +460,7 @@ bool stringContains(string str, char item);
 bool stringRangeEquals(string str, string other, u index);
 bool stringStartsWith(string str, string other);
 bool stringEndsWith(string str, string other);
+void stringRemoveAll(string* str, char c);
 void stringReplaceAll(string* str, string old, string repl);
 bool stringEquals(string str, string other);
 string substring(string str, u index);

@@ -64,6 +64,9 @@ bool stringStartsWith(string str, string other) {
 bool stringEndsWith(string str, string other) {
     return charListEndsWith(str, other);
 }
+void stringRemoveAll(string* str, char c) {
+    charListRemoveAll(str, c);
+}
 void stringReplaceAll(string* str, string old, string repl) {
     charListReplaceAll(str, old, repl);
 }

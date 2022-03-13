@@ -19,29 +19,27 @@ static string compOP(context* c, opc* op, u f) {
                     "\tmovq\t\t%rbp, %rsp\n"
                     "\tmovq\t\t(%rbp), %rbp\n"
                     "\taddq\t\t$");
-            addCptr(&res, utos((c->funs.items[f].locs.len + 1 + c->funs.items[f].args.len) * 8));
+            addCptr(&res, utos((c->funs.items[f].locs.len + c->funs.items[f].args.len + 2) * 8));
             addCptr(&res, ", %rsp\n"
                     "\tjmp\t\t\t*%rax\n");
         } else {
             addCptr(&res, "\tmovq\t\t");
             addCptr(&res, utos(c->funs.items[f].locs.len * 8 + 8));
-            addCptr(&res, "(%rbp), %r12\n"
-                    "\tmovq\t\t%rsp, %rsi\n"
-                    "\tmovq\t\t%rbp, %rdi\n");
-            if (c->funs.items[f].locs.len + c->funs.items[f].args.len + 2 != c->funs.items[f].ret.len) {
-                addCptr(&res, "\taddq\t\t$");
-                addCptr(&res, itos((c->funs.items[f].locs.len + c->funs.items[f].args.len + 2 - c->funs.items[f].ret.len) * 8));
-                addCptr(&res, ", %rdi\n");
+            addCptr(&res, "(%rbp), %rax\n"
+                    "\tmovq\t\t(%rbp), %rbx\n");
+            for (u i = 0; i < c->funs.items[f].ret.len; i++) {
+                addCptr(&res, "\tmovq\t\t");
+                addCptr(&res, utos((c->funs.items[f].ret.len - i - 1) * 8));
+                addCptr(&res, "(%rsp), %rcx\n"
+                        "\tmovq\t\t%rcx, ");
+                addCptr(&res, itos((c->funs.items[f].locs.len + c->funs.items[f].args.len + 1 - i) * 8));
+                addCptr(&res, "(%rbp)\n");
             }
-            addCptr(&res, "\tmovq\t\t$");
-            addCptr(&res, utos(c->funs.items[f].ret.len * 8));
-            addCptr(&res, ", %rdx\n"
-                    "\tcall\t\tmemcpy\n"
-                    "\tmovq\t\t(%rbp), %rbp\n"
+            addCptr(&res, "\tmovq\t\t%rbx, %rbp\n"
                     "\taddq\t\t$");
             addCptr(&res, utos((c->funs.items[f].locs.len + c->funs.items[f].args.len + 2) * 8));
             addCptr(&res, ", %rsp\n"
-                    "\tjmp\t\t\t*%r12\n");
+                    "\tjmp\t\t\t*%rax\n");
         }
     } else if (op->op == OPLDADDR) {
         if (as(popc, op)->par.kind == KFUN) {
@@ -177,10 +175,16 @@ static string compOP(context* c, opc* op, u f) {
             addCptr(&res, "(%rip), %rax\n"
                     "\tpushq\t\t%rax\n");
         } else {
-            addCptr(&res, "\tmovq\t\t$");
-            addCptr(&res, utos(as(popc, op)->par.val.u));
-            addCptr(&res, ", %rax\n"
-                    "\tpushq\t\t%rax\n");
+            if (as(popc, op)->par.val.i <= 2147483647 && as(popc, op)->par.val.i >= -2147483648) {
+                addCptr(&res, "\tpushq\t\t$");
+                addCptr(&res, itos(as(popc, op)->par.val.i));
+                stringAdd(&res, '\n');
+            } else {
+                addCptr(&res, "\tmovq\t\t$");
+                addCptr(&res, utos(as(popc, op)->par.val.u));
+                addCptr(&res, ", %rax\n"
+                        "\tpushq\t\t%rax\n");
+            }
         }
     } else if (op->op == OPLDAT) {
         if (as(popc, op)->par.val.i < 0) {
