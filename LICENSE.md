@@ -1,4 +1,4 @@
-Copyright (C) 2022 Andrew Reeds <andrew.reeds.mpg@gmail.com>
+Copyright (C) 2022 Nádas András <andrew.reeds.mpg@gmail.com>
 <br>
 Author: Andrew Reeds <andrew.reeds.mpg@gmail.com>
 URL: https://github.com/Andrew-Reeds/GStonk
