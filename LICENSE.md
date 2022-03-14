@@ -1,3 +1,5 @@
+MIT License
+<br>
 Copyright (C) 2022 Nádas András <andrew.reeds.mpg@gmail.com>
 <br>
 Author: Andrew Reeds <andrew.reeds.mpg@gmail.com>
