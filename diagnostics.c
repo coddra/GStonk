@@ -172,6 +172,6 @@ void printDgns(context* c) {
             !((c->flags & FIGNOREMSGS) != 0 && DGNS[c->dgns.items[i].kind].lvl == LVLMESSAGE ||
               (c->flags & FIGNOREWRNGS) != 0 && DGNS[c->dgns.items[i].kind].lvl == LVLWARNING ||
               uListContains(c->ignoreDgns, c->dgns.items[i].kind)) &&
-            (c->dgns.items[i].loc.file >= c->inputs.len || !isStd(c, c->inputs.items[c->dgns.items[i].loc.file])))
+            (h == LVLERROR || c->dgns.items[i].loc.file >= c->inputs.len || !isStd(c, c->inputs.items[c->dgns.items[i].loc.file])))
             puts(cptrify(dgnToString(c, i)));
 }

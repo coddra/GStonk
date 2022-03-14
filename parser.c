@@ -25,6 +25,8 @@ set(char)* opSymbols = NULL;
 set(char)* modifiers = NULL;
 set(char)* token = NULL;
 
+list(string) consts = { 0 };
+
 const int tabWidth = 4;
 
 void init(PARSER) {
@@ -39,9 +41,13 @@ void init(PARSER) {
     stringLiteral = charSetComplement(charAggregateFromArray("\n\\\"", 3));
     charLiteral = charSetComplement(charAggregateFromArray("\n\\\'", 3));
     notWhitespace = charSetComplement(whitespace);
-    opSymbols = charAggregateFromArray("~!@$%^&*()-_=+\\|:;,<.>/?`#", 27);
+    opSymbols = charAggregateFromArray("~!@%^&*()-_=+\\|:;,<.>/?`#", 27);
     modifiers = charAggregateFromArray("-`#", 3);
     token = charSetSubstract(notWhitespace, charAggregateFromArray("{}", 2));
+    consts = stringListDefault();
+    stringListAdd(&consts, statstr("$stdin"));
+    stringListAdd(&consts, statstr("$stdout"));
+    stringListAdd(&consts, statstr("$stderr"));
 }
 
 static bool next(context* c) {
@@ -163,27 +169,32 @@ static bool parseUL(context* c, u64* res) {
         if (parseC(c, 'x') || parseC(c, 'X')) {
             if (!parseHex(c, res, 0))
                 addDgn(c, EMISSINGSYNTAX, "value of hexadecimal number");
-            return true;
         } else {
             o = c->loc;
             if (parseAllCS(c, octDigits)) {
                 if (res)
                     *res = strtoul(cptrify(codeFrom(c, o)), NULL, 8);
-                return true;
             } else {
                 if (res)
                     *res = 0;
-                return true;
             }
         }
     } else if (parseAllCS(c, digits)) {
         if (res)
             *res = strtoul(cptrify(codeFrom(c, o)), NULL, 10);
-        return true;
-    } else if (parseCL(c, (char*)res))
-        return true;
-    else
+    } else if (parseCL(c, (char*)res));
+    else if (parseC(c, '$') && parseAllCS(c, letters)) {
+        u i = stringListPos(consts, codeFrom(c, o));
+        if (i == consts.len) {
+            c->loc = o;
+            return false;
+        } else if (res)
+            *res = i;
+    } else {
+        c->loc = o;
         return false;
+    }
+    return true;
 }
 static bool parseDL(context* c, d* res) {
     loc o = c->loc;

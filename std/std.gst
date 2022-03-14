@@ -20,7 +20,7 @@
 
 ::ptr (8);
 
-()isOverflow(flags::u8)::bool {
+()isOverflow(flags::u8)::bool { ;;probably does not work properly
     #0 11 >> 1 & <<|
 }
 
@@ -115,13 +115,13 @@
 }
 
 ()write(s::string):: {
-    #0 1 .puts <<|
+    #0 $stdout .puts <<|
 }
 ()writeLine(s::string):: {
-    #0 1 .puts "\n" 1 .puts <<|
+    #0 $stdout .puts "\n" $stdout .puts <<|
 }
 ()writeLine():: {
-    "\n" 1 .puts <<|
+    "\n" $stdout .puts <<|
 }
 
 ()write(x::u8):: {

@@ -13,7 +13,7 @@ const attDef ATTRIBUTES[ATTCOUNT] = {
     { "signed",
         FNONE,
         FSINGLE,
-        FFLD,
+        FTYP,
     },
     { "main",
         FNONE,
