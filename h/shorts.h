@@ -448,7 +448,8 @@ typedef enum {
         return left > right;                                            \
     }
 
-#define new(type) ((type*)malloc(sizeof(type)))
+#define reset(obj, type) memset(obj, 0, sizeof(type))
+#define new(type) ((type*)reset(malloc(sizeof(type)), type))
 #define as(type, obj) ((type*)obj)
 #define max(type) ((1 << (sizeof(type) * 8)) - 1)
 

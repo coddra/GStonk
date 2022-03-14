@@ -54,7 +54,7 @@ void exitOnError(context* c) {
 int main(int argc, char** argv) {
     init(PARSER);
 
-    context c = contextDefault();
+    context c = {0};
     c.bin = absolutePath(stringify(argv[0]));
     u pos = stringLastPos(c.bin, '/') + 1;
     stringRemoveRange(&c.bin, pos, c.bin.len - pos);

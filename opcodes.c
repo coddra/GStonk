@@ -21,42 +21,41 @@ link(RET) {
     as(popc, o)->retc = 0;
 }
 link(IF) {
-    linkBody(c, as(bopc, o)->head, f, s);
+    linkBody(c, &as(bopc, o)->head, f, s);
     if (s == 0)
         addDgnEmptyLoc(c, ESTACKLOW, o->loc);
     else
         (*s)--;
     i64 e = *s;
-    linkBody(c, as(bopc, o)->body, f, s);
-    if (as(bopc, o)->body2.len != 0)
-        linkBody(c, as(bopc, o)->body2, f, &e);
+    linkBody(c, &as(bopc, o)->body, f, s);
+    if (as(bopc, o)->els.ops.len != 0)
+        linkBody(c, &as(bopc, o)->els, f, &e);
     if (e != *s)
         addDgnEmptyLoc(c, ESTACKUNPRED, o->loc);
 }
 link(WHILE) {
     i64 h = *s;
-    linkBody(c, as(bopc, o)->head, f, s);
+    linkBody(c, &as(bopc, o)->head, f, s);
     h = *s - h;
     if (s == 0)
         addDgnEmptyLoc(c, ESTACKLOW, o->loc);
     else
         (*s)--;
     i64 tmp = *s;
-    linkBody(c, as(bopc, o)->body, f, s);
+    linkBody(c, &as(bopc, o)->body, f, s);
     if (h + *s - tmp != 1)
         addDgnEmptyLoc(c, ESTACKUNPRED, o->loc);
     *s = tmp;
 }
 link(TRY) {
     i64 s1 = 0;
-    linkBody(c, as(bopc, o)->body, f, &s1);
+    linkBody(c, &as(bopc, o)->body, f, &s1);
     i64 s2 = 1;
-    if (as(bopc, o)->body2.len != 0)
-        linkBody(c, as(bopc, o)->body2, f, &s2);
+    if (as(bopc, o)->els.ops.len != 0)
+        linkBody(c, &as(bopc, o)->els, f, &s2);
     else
         s2 = 0;
-    as(bopc, o)->retc = s1;
-    as(bopc, o)->retc2 = s2;//not really needed
+    as(bopc, o)->body.retc = s1;
     if (s1 != s2)
         addDgnEmptyLoc(c, ESTACKUNPRED, o->loc);
     if (s2 < s1)

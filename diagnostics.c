@@ -86,6 +86,10 @@ const dgnDscr DGNS[DGNCOUNT] = {
         "attribute '$' cannot be attached to this kind of object",
         LVLERROR,
     },
+    { "",
+        "not all codepaths return the controlflow",
+        LVLERROR,
+    },
 
     { "wnosize",
         "no size attribute is specified for this type",
@@ -108,12 +112,10 @@ const dgnDscr DGNS[DGNCOUNT] = {
         "'$' is omittable",
         LVLMESSAGE,
     },
-
     { "mmultif",
         "'$' is included multiple times",
         LVLMESSAGE,
     },
-
     { "mnotref",
         "'$' is defined, but never referenced",
         LVLMESSAGE,

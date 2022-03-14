@@ -42,15 +42,17 @@ typedef enum {
     FGENERIC      = 1 << 1,
     FIMMEDIATE    = 1 << 2,
     FLINKED       = 1 << 3,
-    FIGNOREMSGS   = 1 << 4,
-    FIGNOREWRNGS  = FIGNOREMSGS | (1 << 5),
-    FHASMAIN      = 1 << 6,
-    FREFERENCED   = 1 << 7,
-    FSINGLE       = 1 << 8,
-    FARGCRETC     = 1 << 9,
-    FHASBODY      = 1 << 10,
-    FASM          = 1 << 11,
-    FGDB          = FASM | (1 << 12),
+    FPARSED       = 1 << 4,
+    FIGNOREMSGS   = 1 << 5,
+    FIGNOREWRNGS  = FIGNOREMSGS | (1 << 6),
+    FHASMAIN      = 1 << 7,
+    FREFERENCED   = 1 << 8,
+    FSINGLE       = 1 << 9,
+    FARGCRETC     = 1 << 10,
+    FHASBODY      = 1 << 11,
+    FASM          = 1 << 12,
+    FGDB          = FASM | (1 << 13),
+    FSTOPS        = 1 << 14,
 } FLAGS;//flags
 typedef enum {
     OPADD,    OPADDF,   OPINC,
@@ -126,6 +128,7 @@ typedef enum {
     EWRONGPAR,
     EGCCFAILED,
     EWRONGTARGET,
+    ENOTSTOPS,
 
     WNOSIZE,
     WSTACKHIGH,
@@ -179,6 +182,13 @@ typedef struct opc_s {
 typedef opc* opcPtr;
 listDeclare(opcPtr);
 listDeclareVaList(opcPtr);
+typedef struct body_s {
+    loc          loc;
+    string       text;
+    list(opcPtr) ops;
+    FLAGS        flags;
+    i64          retc;
+} body;
 typedef struct popc_s {
     opcDerive;
     par par;
@@ -188,11 +198,9 @@ typedef struct popc_s {
 } popc;//operation code with compile-time parameter
 typedef struct bopc_s {
     opcDerive;
-    list(opcPtr) head;
-    list(opcPtr) body;
-    list(opcPtr) body2;
-    i64 retc;
-    i64 retc2;
+    body head;
+    body body;
+    body els;
 } bopc;//operation code with body
 
 struct context_s;
@@ -237,7 +245,7 @@ typedef struct varDef_s {
 listDeclare(varDef);
 typedef struct funDef_s {
     defDerive;
-    list(opcPtr) body;
+    body         body;
     list(varDef) args;
     list(varDef) locs;
     list(ref)    ret;
@@ -285,25 +293,5 @@ typedef struct context_s {
 
 
 extern const attDef ATTRIBUTES[ATTCOUNT];
-
-loc locDefault();
-par parDefault();
-ref refDefault();
-att attDefault();
-bopc bopcDefault();
-popc popcDefault();
-opc opcDefault();
-opcDef opcDefDefault();
-attDef attDefDefault();
-name nameDefault();
-def defDefault();
-varDef varDefDefault();
-funDef funDefDefault();
-typDef typDefDefault();
-dgnDscr dgnDscrDefault();
-dgn dgnDefault();
-context contextDefault();
-
-string codeFrom(context* c, loc o);
 
 #endif//OBJECTS_H

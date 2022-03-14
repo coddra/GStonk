@@ -7,8 +7,8 @@
 setDeclareDefault(char);
 setDefineDefault(char);
 setDefineVaListInt(char);
-static bool parseHead(context* c, list(opcPtr)* res, u r);
-static bool parseBody(context* c, list(opcPtr)* res, u r);
+static bool parseHead(context* c, body* res, u r);
+static bool skipBody(context* c, body* res);
 
 set(char)* whitespace = NULL;
 set(char)* letters = NULL;
@@ -25,7 +25,7 @@ set(char)* opSymbols = NULL;
 set(char)* modifiers = NULL;
 set(char)* token = NULL;
 
-list(string) consts = { 0 };
+list(string) consts = {0};
 
 const int tabWidth = 4;
 
@@ -44,7 +44,6 @@ void init(PARSER) {
     opSymbols = charAggregateFromArray("~!@%^&*()-_=+\\|:;,<.>/?`#", 27);
     modifiers = charAggregateFromArray("-`#", 3);
     token = charSetSubstract(notWhitespace, charAggregateFromArray("{}", 2));
-    consts = stringListDefault();
     stringListAdd(&consts, statstr("$stdin"));
     stringListAdd(&consts, statstr("$stdout"));
     stringListAdd(&consts, statstr("$stderr"));
@@ -208,7 +207,7 @@ static bool parseDL(context* c, d* res) {
     return true;
 }
 static bool parseSL(context* c, ref* res) {
-    string s = stringDefault();
+    string s = {0};
     if (res)
         res->loc = c->loc;
     if (!parseC(c, '"'))
@@ -262,7 +261,7 @@ static inline bool parseTypIdfr(context* c, name* res) {
     return parseIdfr(c, res);
 }
 static bool parseTypList(context* c, string* res, list(ref) *refs) {
-    name n = nameDefault();
+    name n = {0};
     if (!parseTypIdfr(c, &n))
         return false;
     if (res)
@@ -295,7 +294,7 @@ static bool parseFunIdfr(context* c, name* res) {
     loc o = c->loc;
     if (!parseIdfr(c, res))
         return false;
-    name n = nameDefault();
+    name n = {0};
     if (!parseC(c, '(')) {
         c->loc = o;
         return false;
@@ -331,7 +330,7 @@ static bool parseVarIdfr(context* c, name* res) {
         stringAdd(&res->sign, ':');
         stringAdd(&res->sign, ':');
     }
-    name n = nameDefault();
+    name n = {0};
     if (!parseTypIdfr(c, &n))
         addDgn(c, EMISSINGSYNTAX, "type identifier");
     else if (res)
@@ -342,7 +341,7 @@ static bool parseVarIdfr(context* c, name* res) {
 static bool parseFun(context* c, ref* res) {
     if (res)
         res->loc = c->loc;
-    name n = nameDefault();
+    name n = {0};
     if (parseFunIdfr(c, &n)) {
         u i = getFun(c, n.sign, true);
         if (res)
@@ -354,7 +353,7 @@ static bool parseFun(context* c, ref* res) {
 static bool parseTyp(context* c, ref* res) {
     if (res)
         res->loc = c->loc;
-    name n = nameDefault();
+    name n = {0};
     if (parseTypIdfr(c, &n) && res) {
         u i = getTyp(c, n.sign, true);
         if (res)
@@ -367,7 +366,7 @@ static bool parseTyp(context* c, ref* res) {
 static bool parseGlb(context* c, ref* res) {
     if (res)
         res->loc = c->loc;
-    name n = nameDefault();
+    name n = {0};
     if (parseVarIdfr(c, &n)) {
         u i = getGlb(c, n.sign, true);
         if (res)
@@ -377,7 +376,7 @@ static bool parseGlb(context* c, ref* res) {
     return true;
 }
 static bool parseVar(context* c, ref* res, list(varDef)* l) {
-    name n = nameDefault();
+    name n = {0};
     if (!parseVarIdfr(c, &n))
         return false;
     else if (res) {
@@ -469,7 +468,7 @@ static bool parseAttList(context* c, list(att)* res) {
     if (!parseC(c, '['))
         return false;
     parseAllCS(c, whitespace);
-    att a = attDefault();
+    att a = {0};
     bool commaflag = true;
     while (parseAtt(c, &a)) {
         attListAdd(res, a);
@@ -492,7 +491,7 @@ static bool parseVarDef(context* c, varDef* res) {
         addDgn(c, EMISSINGTOKEN, "::");
     stringAdd(&res->name.sign, ':');
     stringAdd(&res->name.sign, ':');
-    name n = nameDefault();
+    name n = {0};
     if (!parseTypIdfr(c, &n))
         addDgn(c, EMISSINGSYNTAX, "type of variable");
     stringAddRange(&res->name.sign, n.sign);
@@ -508,7 +507,7 @@ static bool parseVarList(context* c, list(varDef)* res) {
     if (!parseC(c, '('))
         return false;
     parseAllCS(c, whitespace);
-    varDef v = varDefDefault();
+    varDef v = {0};
     bool commaflag = true;
     while (parseVarDef(c, &v)) {
         u r = getVar(res, v.name.sign, false);
@@ -601,15 +600,18 @@ static bool parseOPC(context* c, opc** res, u r) {
         (*res)->op = op;
         parseAllCS(c, whitespace);
         if (op == OPIF || op == OPWHILE)
-            parseHead(c, &as(bopc, *res)->head, r);
+            if (parseHead(c, &as(bopc, *res)->head, r))
+                parseAllCS(c, whitespace);
+        if (stops(*res))
+            return true;
         if (!parseBody(c, &as(bopc, *res)->body, r))
             addDgn(c, EMISSINGSYNTAX, "body of control statement");
-        as(bopc, *res)->body2 = opcPtrListDefault();
+        reset(&as(bopc, *res)->els, body);
         if (op == OPIF || op == OPTRY) {
             parseAllCS(c, whitespace);
             if (parseCptr(c, "|>") || parseCptr(c, ".else")) {
                 parseAllCS(c, whitespace);
-                if (!parseBody(c, &as(bopc, *res)->body2, r))
+                if (!parseBody(c, &as(bopc, *res)->els, r))
                     addDgn(c, EMISSINGSYNTAX, "body of else branch");
             } else if (op == OPIF) {
                 bopc* last = as(bopc, *res);
@@ -622,13 +624,13 @@ static bool parseOPC(context* c, opc** res, u r) {
                         addDgn(c, EMISSINGSYNTAX, "body of else branch");
                     else
                         parseAllCS(c, whitespace);
-                    last->body2 = opcPtrListDefault();
-                    opcPtrListAdd(&as(bopc, last)->body2, as(opc, elif));
+                    reset(&last->els, body);
+                    opcPtrListAdd(&as(bopc, last)->els.ops, as(opc, elif));
                     last = elif;
                 }
                 if (parseCptr(c, "|>") || parseCptr(c, ".else")) {
                     parseAllCS(c, whitespace);
-                    if (!parseBody(c, &as(bopc, *res)->body2, r))
+                    if (!parseBody(c, &as(bopc, *res)->els, r))
                         addDgn(c, EMISSINGSYNTAX, "body of else branch");
                 }
             }
@@ -636,25 +638,37 @@ static bool parseOPC(context* c, opc** res, u r) {
     }
     return s.len != 0 || as(popc, *res)->par.kind != KNONE;
 }
-static bool parseHead(context* c, list(opcPtr)* res, u r) {
+static bool parseHead(context* c, body* res, u r) {
     opc* op;
-    *res = opcPtrListDefault();
+    reset(res, body);
+    res->loc = c->loc;
     if (!parseOPC(c, &op, r))
         return false;
-    opcPtrListAdd(res, op);
+    opcPtrListAdd(&res->ops, op);
     parseAllCS(c, whitespace);
     bool t = true;
     while (t) {
-        if (parseOPC(c, &op, r))
-            opcPtrListAdd(res, op);
+        if (parseOPC(c, &op, r)) {
+            opcPtrListAdd(&res->ops, op);
+            if (stops(op)) {
+                parseAllCS(c, whitespace);
+                loc o = c->loc;
+                if (parseAllCS(c, token) || skipBody(c, NULL))
+                    addDgnEmptyLoc(c, WUNREACHCODE, o);
+                while (parseAllCS(c, whitespace) || parseAllCS(c, token) || skipBody(c, NULL));
+                res->flags |= FSTOPS;
+                t = false;
+            }
+        }
         else
             t = parseToken(c);
         if (t)
             parseAllCS(c, whitespace);
     }
+    res->flags |= FPARSED;
     return true;
 }
-static bool parseBody(context* c, list(opcPtr)* res, u r) {
+bool parseBody(context* c, body* res, u r) {
     if (!parseC(c, '{'))
         return false;
     parseAllCS(c, whitespace);
@@ -663,11 +677,34 @@ static bool parseBody(context* c, list(opcPtr)* res, u r) {
         addDgn(c, EMISSINGTOKEN, "}");
     return true;
 }
+static bool skipBody(context* c, body* res) {
+    if (res)
+        res->loc = c->loc;
+    if (!parseC(c, '{'))
+        return false;
+    while (parseAllCS(c, token) || parseAllCS(c, whitespace) || skipBody(c, NULL));
+    if (!parseC(c, '}'))
+        addDgn(c, EMISSINGTOKEN, "}");
+    if (res)
+        res->text = codeFrom(c, res->loc);
+    return true;
+}
+void completeBody(context* c, body* b, u r) {
+    loc tmpL = c->loc;
+    string tmpT = c->text;
+    c->loc = b->loc;
+    c->loc.cr = 0;
+    c->text = b->text;
+    parseBody(c, b, r);
+    free(c->text.items);
+    c->loc = tmpL;
+    c->text = tmpT;
+}
 
 static bool parseGlbDef(context* c) {
     if (!parseCptr(c, "<>"))
         return false;
-    varDef v = varDefDefault();
+    varDef v = {0};
     if (!parseVarDef(c, &v))
         addDgn(c, EMISSINGSYNTAX, "variable definition");
     else {
@@ -683,7 +720,7 @@ static bool parseGlbDef(context* c) {
 static bool parseTypDef(context* c) {
     if (!parseCptr(c, "::"))
         return false;
-    name n = nameDefault();
+    name n = {0};
     if (!parseIdfr(c, &n))
         addDgn(c, EMISSINGSYNTAX, "type identifier");
     u r = getTyp(c, n.sign, false);
@@ -692,12 +729,12 @@ static bool parseTypDef(context* c) {
     else
         c->typs.items[r].name = n;
     parseAllCS(c, whitespace);
-    list(att) al = attListDefault();
+    list(att) al = {0};
     if (parseAttList(c, &al))
         parseAllCS(c, whitespace);
     if ((c->typs.items[r].flags & FDEFINED) == 0)
         c->typs.items[r].attrs = al;
-    list(varDef) vl = varDefListDefault();
+    list(varDef) vl = {0};
     if (parseVarList(c, &vl)) {
         parseAllCS(c, whitespace);
         if ((c->typs.items[r].flags & FDEFINED) == 0) {
@@ -727,17 +764,17 @@ static bool parseTypDef(context* c) {
 static bool parseFunDef(context* c) {
     if (!parseCptr(c, "()"))
         return false;
-    name n = nameDefault();
+    name n = {0};
     if (!parseIdfr(c, &n))
         addDgn(c, EMISSINGSYNTAX, "function identifier");
     parseAllCS(c, whitespace);
-    list(varDef) vars = varDefListDefault();
+    list(varDef) vars = {0};
     if (!parseVarList(c, &vars))
         addDgn(c, EMISSINGSYNTAX, "argument list of function");
     else
         parseAllCS(c, whitespace);
-    list(ref) rets = refListDefault();
-    string typlist = stringDefault();
+    list(ref) rets = {0};
+    string typlist = {0};
     if (parseCptr(c, "::")) {
         parseAllCS(c, whitespace);
         if (parseTypList(c, &typlist, &rets))
@@ -759,22 +796,30 @@ static bool parseFunDef(context* c) {
         c->funs.items[r].args = vars;
         c->funs.items[r].ret = rets;
     }
-    vars = varDefListDefault();
+    reset(&vars, list(varDef));
     if (parseVarList(c, &vars))
         parseAllCS(c, whitespace);
     if ((c->funs.items[r].flags & FDEFINED) == 0)
         c->funs.items[r].locs = vars;
-    list(att) a = attListDefault();
+    list(att) a = {0};
     if (parseAttList(c, &a))
         parseAllCS(c, whitespace);
     if ((c->funs.items[r].flags & FDEFINED) == 0)
         c->funs.items[r].attrs = a;
-    list(opcPtr) b = opcPtrListDefault();
-    if (parseBody(c, &b, r)) {
-        if ((c->funs.items[r].flags & FDEFINED) == 0)
-            c->funs.items[r].body = b;
-    } else
-        addDgn(c, EMISSINGSYNTAX, "body of function");
+    body b = {0};
+    if ((c->funs.items[r].flags & FREFERENCED) != 0 || hasAtt(c->funs.items[r].attrs, ATTMAIN, NULL)) {
+        if (parseBody(c, &b, r)) {
+            if ((c->funs.items[r].flags & FDEFINED) == 0)
+                c->funs.items[r].body = b;
+        } else
+            addDgn(c, EMISSINGSYNTAX, "body of function");
+    } else {
+        if (skipBody(c, &b)) {
+            if ((c->funs.items[r].flags & FDEFINED) == 0)
+                c->funs.items[r].body = b;
+        } else
+            addDgn(c, EMISSINGSYNTAX, "body of function");
+    }
     c->funs.items[r].flags |= FDEFINED;
     return true;
 }
@@ -788,7 +833,7 @@ void parse(context* c) {
         c->loc.cr = 0;
         preprocess(c);
         parseAllCS(c, whitespace);
-        attList a = attListDefault();
+        attList a = {0};
         if (parseAttList(c, &a)) {
             for (u i = 0; i < a.len; i++)
                 if (a.items[i].kind == ATTUSE && a.items[i].par.kind == KSTR)
@@ -804,6 +849,7 @@ void parse(context* c) {
             }
             parseAllCS(c, whitespace);
         }
+        free(c->text.items);
     }
     c->loc.file = c->inputs.len;
 }

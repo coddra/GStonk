@@ -1,6 +1,7 @@
 #include "h/linker.h"
 #include "h/opcodes.h"
 #include "h/diagnostics.h"
+#include "h/parser.h"
 
 string getCsign(string sign) {
     string res = stringClone(sign);
@@ -36,13 +37,16 @@ bool hasAtt(list(att) atts, ATTKIND kind, att* res) {
 
 u getFun(context* c, string sign, bool r) {
     u res = 0;
-    for ( ; res < c->funs.len; res++)
+    for (; res < c->funs.len; res++)
         if (stringEquals(c->funs.items[res].name.sign, sign)) {
-            if (r)
+            if (r) {
+                if ((c->funs.items[res].flags & FDEFINED) != 0 && (c->funs.items[res].body.flags & FPARSED) == 0)
+                    completeBody(c, &c->funs.items[res].body, res);
                 c->funs.items[res].flags |= FREFERENCED;
+            }
             return res;
         }
-    funDef f = funDefDefault();
+    funDef f = {0};
     f.name.sign = sign;
     if (r)
         f.flags = FREFERENCED;
@@ -56,7 +60,7 @@ u getTyp(context* c, string sign, bool r) {
             c->typs.items[res].flags |= r * FREFERENCED;
             return res;
         }
-    typDef t = typDefDefault();
+    typDef t = {0};
     t.name.sign = sign;
     t.flags = r * FREFERENCED;
     typDefListAdd(&c->typs, t);
@@ -69,7 +73,7 @@ u getGlb(context* c, string sign, bool r) {
             c->glbs.items[res].flags |= r * FREFERENCED;
             return res;
         }
-    varDef v = varDefDefault();
+    varDef v = {0};
     v.name.sign = sign;
     v.flags = r * FREFERENCED;
     varDefListAdd(&c->glbs, v);
@@ -92,7 +96,7 @@ u getVar(list(varDef)* l, string sign, bool r) {
             l->items[res].flags |= r * FREFERENCED;
             return res;
         }
-    varDef v = varDefDefault();
+    varDef v = {0};
     v.name.sign = sign;
     v.flags = r * FREFERENCED;
     varDefListAdd(l, v);
@@ -125,6 +129,9 @@ bool isGOP(context* c, string code, par* pars, OP* op) {
     return false;
 }
 
+string codeFrom(context* c, loc o) {
+    return stringGetRange(c->text, o.cr, c->loc.cr - o.cr);
+}
 static bool hasFile(context* c, string path) {
     u i = 0;
     for (; i < c->inputs.len && !stringEquals(absolutePath(path), absolutePath(c->inputs.items[i])); i++);
@@ -148,6 +155,13 @@ void addFile(context* c, string path) {
 }
 bool isStd(context* c, string path) {
     return stringStartsWith(path, c->bin);
+}
+
+bool stops(opc* op) {
+    return op->op == OPRET || op->op == OPTHROW || op->op == OPEXIT ||
+        ((OPS[op->op].flags & FHASBODY) != 0 &&
+         ((as(bopc, op)->head.flags & FSTOPS) != 0 ||
+          (as(bopc, op)->body.flags & as(bopc, op)->els.flags & FSTOPS) != 0));
 }
 
 static void linkAtt(context* c, list(att) atts, AFLAG t) {
@@ -223,27 +237,29 @@ static void linkParam(context* c, opc* o, u f) {
                   strcat("`", utos(as(popc, o)->par.val.r.i)) :
                   cptrify(c->funs.items[f].locs.items[as(popc, o)->par.val.r.i].name.sign));
 }
-void linkBody(context* c, list(opcPtr) b, u f, i64* s) {
-    for (u i = 0; i < b.len; i++) {
-        if (OPS[b.items[i]->op].arg != FNONE)
-            linkParam(c, b.items[i], f);
-        if (OPS[b.items[i]->op].link != NULL)
-            (*OPS[b.items[i]->op].link)(c, b.items[i], f, s);
-        if (OPS[b.items[i]->op].flags & FARGCRETC)
-            *s -= as(popc, b.items[i])->argc;
-        else if ((OPS[b.items[i]->op].flags & FHASBODY) == 0)
-            *s -= OPS[b.items[i]->op].argc;
+void linkBody(context* c, body* b, u f, i64* s) {
+    b->retc = *s;
+    for (u i = 0; i < b->ops.len; i++) {
+        if (OPS[b->ops.items[i]->op].arg != FNONE)
+            linkParam(c, b->ops.items[i], f);
+        if (OPS[b->ops.items[i]->op].link != NULL)
+            (*OPS[b->ops.items[i]->op].link)(c, b->ops.items[i], f, s);
+        if (OPS[b->ops.items[i]->op].flags & FARGCRETC)
+            *s -= as(popc, b->ops.items[i])->argc;
+        else if ((OPS[b->ops.items[i]->op].flags & FHASBODY) == 0)
+            *s -= OPS[b->ops.items[i]->op].argc;
         if (*s < 0){
-            addDgnEmptyLoc(c, ESTACKLOW, b.items[i]->loc);
+            addDgnEmptyLoc(c, ESTACKLOW, b->ops.items[i]->loc);
             *s = 0;
         }
-        if (OPS[b.items[i]->op].flags & FARGCRETC)
-            *s += as(popc, b.items[i])->retc;
-        else if ((OPS[b.items[i]->op].flags & FHASBODY) == 0)
-            *s += OPS[b.items[i]->op].retc;
-        if ((b.items[i]->op == OPRET || b.items[i]->op == OPTHROW || b.items[i]->op == OPEXIT) && i != b.len - 1)
-            addDgnEmptyLoc(c, WUNREACHCODE, b.items[i + 1]->loc);
+        if (OPS[b->ops.items[i]->op].flags & FARGCRETC)
+            *s += as(popc, b->ops.items[i])->retc;
+        else if ((OPS[b->ops.items[i]->op].flags & FHASBODY) == 0)
+            *s += OPS[b->ops.items[i]->op].retc;
+        if ((b->ops.items[i]->op == OPRET || b->ops.items[i]->op == OPTHROW || b->ops.items[i]->op == OPEXIT) && i != b->ops.len - 1)
+            addDgnEmptyLoc(c, WUNREACHCODE, b->ops.items[i + 1]->loc);
     }
+    b->retc = *s - b->retc;
 }
 static void linkFun(context* c, list(funDef) funs) {
     for (u i = 0; i < funs.len; i++)
@@ -252,10 +268,14 @@ static void linkFun(context* c, list(funDef) funs) {
             linkVar(c, funs.items[i].args, FARG);
             linkVar(c, funs.items[i].locs, FLOC);
             linkTypList(c, funs.items[i].ret);
-            i64 b = 0;
-            linkBody(c, funs.items[i].body, i, &b);
-            if (b > 0)
-                addDgnLoc(c, WSTACKHIGH, funs.items[i].name.loc, utos(b));
+            if (funs.items[i].body.flags & FPARSED) {
+                i64 b = 0;
+                linkBody(c, &funs.items[i].body, i, &b);
+                if (b > 0)
+                    addDgnLoc(c, WSTACKHIGH, funs.items[i].name.loc, utos(b));
+                if ((funs.items[i].body.flags & FSTOPS) == 0)
+                    addDgnEmptyLoc(c, ENOTSTOPS, c->funs.items[i].body.loc);
+            }
             funs.items[i].name.csign = getCsign(funs.items[i].name.sign);
             if (hasAtt(funs.items[i].attrs, ATTMAIN, NULL)) {
                 if (c->flags & FHASMAIN)

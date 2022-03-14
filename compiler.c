@@ -217,21 +217,21 @@ static string compOP(context* c, opc* op, u f) {
         stringAddRange(&res, getRegister('b', as(popc, op)->par.val.u));
         addCptr(&res, ", (%rax)\n");
     } else if (op->op == OPIF) {
-        for (u i = 0; i < as(bopc, op)->head.len; i++)
-            stringAddRange(&res, compOP(c, as(bopc, op)->head.items[i], f));
+        for (u i = 0; i < as(bopc, op)->head.ops.len; i++)
+            stringAddRange(&res, compOP(c, as(bopc, op)->head.ops.items[i], f));
         string tmp = stringDefault();
-        for (u i = 0; i < as(bopc, op)->body.len; i++)
-            stringAddRange(&tmp, compOP(c, as(bopc, op)->body.items[i], f));
+        for (u i = 0; i < as(bopc, op)->body.ops.len; i++)
+            stringAddRange(&tmp, compOP(c, as(bopc, op)->body.ops.items[i], f));
         addCptr(&res, "\tpopq\t\t%rax\n"
                 "\tcmpq\t\t$0, %rax\n"
                 "\tje\t\t\t.addr");
         addCptr(&res, utos(c->addr));
         stringAdd(&res, '\n');
         stringAddRange(&res, tmp);
-        if (as(bopc, op)->body2.len > 0) {
+        if (as(bopc, op)->els.ops.len > 0) {
             tmp.len = 0;
-            for (u i = 0; i < as(bopc, op)->body2.len; i++)
-                stringAddRange(&tmp, compOP(c, as(bopc, op)->body2.items[i], f));
+            for (u i = 0; i < as(bopc, op)->els.ops.len; i++)
+                stringAddRange(&tmp, compOP(c, as(bopc, op)->els.ops.items[i], f));
             addCptr(&res, "\tjmp\t\t\t.addr");
             addCptr(&res, utos(c->addr));
             addCptr(&res, "\n"
@@ -240,11 +240,11 @@ static string compOP(context* c, opc* op, u f) {
         }
     } else if (op->op == OPWHILE) {
         u64 head = c->addr;
-        for (u i = 0; i < as(bopc, op)->head.len; i++)
-            stringAddRange(&res, compOP(c, as(bopc, op)->head.items[i], f));
+        for (u i = 0; i < as(bopc, op)->head.ops.len; i++)
+            stringAddRange(&res, compOP(c, as(bopc, op)->head.ops.items[i], f));
         string tmp = stringDefault();
-        for (u i = 0; i < as(bopc, op)->body.len; i++)
-            stringAddRange(&tmp, compOP(c, as(bopc, op)->body.items[i], f));
+        for (u i = 0; i < as(bopc, op)->body.ops.len; i++)
+            stringAddRange(&tmp, compOP(c, as(bopc, op)->body.ops.items[i], f));
         addCptr(&res, "\tpopq\t\t%rax\n"
                 "\tcmpq\t\t$0, %rax\n"
                 "\tje\t\t\t.addr");
@@ -265,15 +265,15 @@ static string compOP(context* c, opc* op, u f) {
                 "\tmovq\t\t.excrsp(%rip), %rax\n"
                 "\tpushq\t\t%rax\n"
                 "\tmovq\t\t%rsp, .excrsp(%rip)\n");
-        for (u i = 0; i < as(bopc, op)->body.len; i++)
-            stringAddRange(&res, compOP(c, as(bopc, op)->body.items[i], f));
+        for (u i = 0; i < as(bopc, op)->body.ops.len; i++)
+            stringAddRange(&res, compOP(c, as(bopc, op)->body.ops.items[i], f));
         addCptr(&res, "\tmovq\t\t.excrsp(%rip), %rax\n"
                 "\tmovq\t\t(%rax), %rax\n"
                 "\tmovq\t\t%rax, .excrsp(%rip)\n");
-        if (as(bopc, op)->retc > 0) {
+        if (as(bopc, op)->body.retc > 0) {
             addCptr(&res, "\tmovq\t\t%rsp, %rsi\n"
                     "\tmovq\t\t$");
-            addCptr(&res, utos(as(bopc, op)->retc * 8));
+            addCptr(&res, utos(as(bopc, op)->body.retc * 8));
             addCptr(&res, ", %rdx\n"
                     "\taddq\t\t%rdx, %rsi\n"
                     "\tmovq\t\t%rsi, %rdi\n"
@@ -281,10 +281,10 @@ static string compOP(context* c, opc* op, u f) {
                     "\tcall\t\tmemcpy\n"
                     "\taddq\t\t$24, %rsp\n");
         }
-        if (as(bopc, op)->body2.len > 0) {
+        if (as(bopc, op)->els.ops.len > 0) {
             string tmp = stringDefault();
-            for (u i = 0; i < as(bopc, op)->body2.len; i++)
-                stringAddRange(&tmp, compOP(c, as(bopc, op)->body2.items[i], f));
+            for (u i = 0; i < as(bopc, op)->els.ops.len; i++)
+                stringAddRange(&tmp, compOP(c, as(bopc, op)->els.ops.items[i], f));
             addCptr(&res, "\tjmp\t\t.addr");
             addCptr(&res, utos(c->addr));
             addCptr(&res, "\n"
@@ -313,8 +313,8 @@ static string compFun(context* c, u f) {
     }
     addCptr(&res, "\tpushq\t\t%rbp\n"
             "\tmovq\t\t%rsp, %rbp\n");
-    for (u i = 0; i < c->funs.items[f].body.len; i++)
-        stringAddRange(&res, compOP(c, c->funs.items[f].body.items[i], f));
+    for (u i = 0; i < c->funs.items[f].body.ops.len; i++)
+        stringAddRange(&res, compOP(c, c->funs.items[f].body.ops.items[i], f));
     return res;
 }
 static string compGlb(context* c, u g) {
@@ -387,7 +387,8 @@ string compile(context* c) {
             "\tmovq\t\t$1, %rdi\n"
             "\tsyscall\n");
     for (u i = 0; i < c->funs.len; i++)
-        stringAddRange(&res, compFun(c, i));
+        if (c->funs.items[i].body.flags & FPARSED)
+            stringAddRange(&res, compFun(c, i));
     addCptr(&res, ".addr");
     addCptr(&res, utos(c->addr));
     addCptr(&res, ":\n"
@@ -397,7 +398,8 @@ string compile(context* c) {
             ".excrsp:\n"
             "\t.zero\t\t8\n");
     for (u i = 0; i < c->glbs.len; i++)
-        stringAddRange(&res, compGlb(c, i));
+        if (c->glbs.items[i].flags & FREFERENCED)
+            stringAddRange(&res, compGlb(c, i));
     for (u i = 0; i < c->strs.len; i++)
         stringAddRange(&res, compStr(c, i));
     return res;
