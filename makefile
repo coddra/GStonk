@@ -1,5 +1,5 @@
 CC:=gcc
-CFLAGS:=-ggdb -g3 -w
+CFLAGS:=-O3
 
 OBJS:=$(patsubst %.c,%.o,$(wildcard *.c))
 DFILES:=$(patsubst %.o,%.d,$(OBJS))

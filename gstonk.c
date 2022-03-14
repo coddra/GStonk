@@ -85,7 +85,9 @@ int main(int argc, char** argv) {
     addCptr(&cmd, " -o ");
     stringAddRange(&cmd, c.output);
     if (c.flags & FGDB)
-        addCptr(&out, " -ggdb -g3");
+        addCptr(&cmd, " -ggdb -g3");
+    else
+        addCptr(&cmd, " -O3");
     int res = system(cptrify(cmd));
     if (res)
         addDgn(&c, EGCCFAILED, utos(res));
