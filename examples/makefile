@@ -1,12 +1,8 @@
 CC:=../gstonk
 CFLAGS:=
 NAMES:=$(patsubst %.gst,%,$(wildcard *.gst))
-define nl
 
-
-endef
-
-all: $(NAMES)
+all: clean $(NAMES)
 
 clean:
 	rm -rf $(NAMES)
