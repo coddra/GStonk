@@ -216,9 +216,11 @@ static bool parseSL(context* c, ref* res) {
                 addDgn(c, EMISSINGTOKEN, "\"");
         }
     }
-    if (res)
-        res->i = c->strs.len;
-    stringListAdd(&c->strs, s);
+    if (res) {
+        res->i = stringListPos(c->strs, s);
+        if (res->i == c->strs.len)
+            stringListAdd(&c->strs, s);
+    }
     return true;
 }
 
