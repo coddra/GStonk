@@ -18,7 +18,11 @@ $ gstonk <source1> [source2] [source...] [-o<output>]
 ```
 Syntax explanations will be added later, in the meantime, be content with the examples.
 ## Examples
-Examples are moved into the examples folder, more will be added later on. You can also peek the std folder.
+Examples are moved into the examples folder, more will be added later on. You can also peek the std folder. To compile all examples, run
+``` console
+$ make examples
+```
+
 ``` gstonk
 ()main():: [main] {
     "Hello World!\n" 1 .puts .ret
