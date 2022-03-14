@@ -341,7 +341,8 @@ static string compStr(context* c, u s) {
             "\t.byte\t\t");
     for (u i = 0; i < 8; i++) {
         addCptr(&res, utos((c->strs.items[s].len >> (i * 8)) % 256));
-        stringAdd(&res, ',');
+        if (i != 7 || c->strs.items[s].len > 0)
+            stringAdd(&res, ',');
     }
     stringAdd(&res, '\t');
     for (u i = 0; i < c->strs.items[s].len; i++) {

@@ -125,6 +125,7 @@ typedef enum {
     ENOPAR,
     EWRONGPAR,
     EGCCFAILED,
+    EWRONGTARGET,
 
     WNOSIZE,
     WSTACKHIGH,

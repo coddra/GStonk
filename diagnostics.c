@@ -82,6 +82,10 @@ const dgnDscr DGNS[DGNCOUNT] = {
         "gcc returned exit status '$'",
         LVLERROR,
     },
+    { "",
+        "attribute '$' cannot be attached to this kind of object",
+        LVLERROR,
+    },
 
     { "wnosize",
         "no size attribute is specified for this type",
