@@ -254,12 +254,10 @@ typedef struct dgnDscr_s {
     LVL lvl;
 } dgnDscr;//diagnostic descriptor
 typedef char* charPtr;
-listDeclareEquals(charPtr);
-bool charPtrEquals(charPtr, charPtr);
 typedef struct dgn_s {
-    DGNKIND descr;
-    loc loc;
-    list(charPtr) params;
+    DGNKIND kind;
+    loc     loc;
+    char*   prm;
 } dgn;//diagnostic
 
 listDeclare(typDef);

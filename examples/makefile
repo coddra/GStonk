@@ -1,11 +1,15 @@
 CC:=../gstonk
 CFLAGS:=
-GSTFILES:=$(wildcard *.gst)
+NAMES:=$(patsubst %.gst,%,$(wildcard *.gst))
 define nl
 
 
 endef
-COMPCMDS:=$(patsubst %.gst,$(CC) $(CFLAGS) %.gst$(nl),$(GSTFILES))
 
-all:
-	$(COMPCMDS)
+all: $(NAMES)
+
+clean:
+	rm -rf $(NAMES)
+
+$(NAMES):
+	$(CC) $(CFLAGS) $@.gst

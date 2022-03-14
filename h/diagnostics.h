@@ -4,12 +4,10 @@
 
 extern const dgnDscr DGNS[DGNCOUNT];
 
-void addDgnMultiLoc(context* c, DGNKIND desc, loc loc, list(charPtr) params);
-void addDgnLoc(context* c, DGNKIND desc, loc loc, char* param);
-void addDgnMulti(context* c, DGNKIND desc, list(charPtr) params);
-void addDgnEmpty(context* c, DGNKIND desc);
-void addDgnEmptyLoc(context* c, DGNKIND desc, loc loc);
-void addDgn(context* c, DGNKIND desc, char* param);
+void addDgnLoc(context* c, DGNKIND kind, loc loc, char* prm);
+void addDgnEmpty(context* c, DGNKIND kind);
+void addDgnEmptyLoc(context* c, DGNKIND kind, loc loc);
+void addDgn(context* c, DGNKIND kind, char* prm);
 string dgnToString(context* c, u d);
 LVL highestLVL(context* c);
 void printDgns(context* c);

@@ -5,10 +5,6 @@ listDefine(att);
 listDefine(varDef);
 listDefine(ref);
 listDefine(funDef);
-bool charPtrEquals(charPtr left, charPtr right) {
-    return strcmp(left, right) == 0;
-}
-listDefineEquals(charPtr);
 listDefine(typDef);
 listDefine(dgn);
 listDefineEquals(string);
@@ -117,8 +113,6 @@ dgnDscr dgnDscrDefault() {
 }
 dgn dgnDefault() {
     dgn res = { 0 };
-    res.loc = locDefault();
-    res.params = charPtrListDefault();
     return res;
 }
 context contextDefault() {
