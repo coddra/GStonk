@@ -10,8 +10,8 @@ void addDgnMulti(context* c, DGNKIND desc, list(charPtr) params);
 void addDgnEmpty(context* c, DGNKIND desc);
 void addDgnEmptyLoc(context* c, DGNKIND desc, loc loc);
 void addDgn(context* c, DGNKIND desc, char* param);
-string dgnToString(dgn d);
+string dgnToString(context* c, u d);
+LVL highestLVL(context* c);
 void printDgns(context* c);
-bool checkErr(context* c);
 
 #endif // DIAGNOSTICS_H

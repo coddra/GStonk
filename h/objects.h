@@ -45,12 +45,12 @@ typedef enum {
     FIGNOREMSGS   = 1 << 4,
     FIGNOREWRNGS  = FIGNOREMSGS | (1 << 5),
     FHASMAIN      = 1 << 6,
-    FGDB          = 1 << 7,
-    FREFERENCED   = 1 << 8,
-    FSINGLE       = 1 << 9,
-    FARGCRETC     = 1 << 10,
-    FHASBODY      = 1 << 11,
-    FASM          = 1 << 12,
+    FREFERENCED   = 1 << 7,
+    FSINGLE       = 1 << 8,
+    FARGCRETC     = 1 << 9,
+    FHASBODY      = 1 << 10,
+    FASM          = 1 << 11,
+    FGDB          = FASM | (1 << 12),
 } FLAGS;//flags
 typedef enum {
     OPADD,    OPADDF,   OPINC,
@@ -134,6 +134,7 @@ typedef enum {
     MTOKENOMITTABLE,
     MMULTIFILE,
     MNOTREFERENCED,
+    MSUCCESS,
 
     DGNCOUNT,
 } DGNKIND;
@@ -142,7 +143,7 @@ typedef struct loc_s {
     u cr;
     u ln;
     u cl;
-    string file;
+    u file;
 } loc;//location
 
 typedef struct ref_s {
@@ -266,6 +267,7 @@ listDeclare(funDef);
 listDeclare(dgn);
 listDeclareEquals(string);
 typedef struct context_s {
+    string       bin;
     string       text;
     loc          loc;
     u64          addr;

@@ -13,5 +13,8 @@ clean:
 	find -name "*~" -delete
 	rm -rf $(OBJS) $(DFILES)
 
+examples:
+	make -C examples all
+
 $(OBJS):
 -include $(DFILES)

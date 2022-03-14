@@ -1,4 +1,5 @@
 #include "h/diagnostics.h"
+#include "h/linker.h"
 
 const dgnDscr DGNS[DGNCOUNT] = {
     { "",
@@ -112,7 +113,11 @@ const dgnDscr DGNS[DGNCOUNT] = {
     { "mnotref",
         "'{0}' is defined, but never referenced",
         LVLMESSAGE,
-    }
+    },
+    { "msccess",
+        "executable successfully generated",
+        LVLMESSAGE,
+    },
 };
 
 void addDgnMultiLoc(context* c, DGNKIND desc, loc loc, list(charPtr) params) {
@@ -138,35 +143,41 @@ void addDgn(context* c, DGNKIND desc, char* param) {
     charPtrListAdd(&ps, param);
     addDgnMultiLoc(c, desc, c->loc, ps);
 }
-string dgnToString(dgn d) {
-    string res = DGNS[d.descr].lvl == LVLERROR ? stringify("error: ") : DGNS[d.descr].lvl == LVLWARNING ? stringify("warning: ") : stringify("message: ");
-    addCptr(&res, DGNS[d.descr].msg);
-    for (u i = 0; i < d.params.len; i++)
-        replaceAllCptr(&res, concat(concat("{", utos(i)), "}"), d.params.items[i]);
+string dgnToString(context* c, u d) {
+    string res = DGNS[c->dgns.items[d].descr].lvl == LVLERROR ? stringify("error: ") : DGNS[c->dgns.items[d].descr].lvl == LVLWARNING ? stringify("warning: ") : stringify("message: ");
+    addCptr(&res, DGNS[c->dgns.items[d].descr].msg);
+    for (u i = 0; i < c->dgns.items[d].params.len; i++)
+        replaceAllCptr(&res, concat(concat("{", utos(i)), "}"), c->dgns.items[d].params.items[i]);
     addCptr(&res, "\n");
-    if (d.loc.file.len != 0) {
+    if (c->dgns.items[d].loc.file < c->inputs.len) {
         addCptr(&res, "\tin file '");
-        stringAddRange(&res, d.loc.file);
+        stringAddRange(&res, c->inputs.items[c->dgns.items[d].loc.file]);
         addCptr(&res, "', at line: ");
-        addCptr(&res, utos(d.loc.ln));
+        addCptr(&res, utos(c->dgns.items[d].loc.ln));
         addCptr(&res, ", column: ");
-        addCptr(&res, utos(d.loc.cl));
+        addCptr(&res, utos(c->dgns.items[d].loc.cl));
     }
-    if ((DGNS[d.descr].lvl & (LVLWARNING | LVLMESSAGE)) != 0) {
+    if ((DGNS[c->dgns.items[d].descr].lvl & (LVLWARNING | LVLMESSAGE)) != 0) {
         addCptr(&res, " (-");
-        addCptr(&res, DGNS[d.descr].id);
+        addCptr(&res, DGNS[c->dgns.items[d].descr].id);
         addCptr(&res, ")");
     }
-    stringAdd(&res, '\n');
+    return res;
+}
+LVL highestLVL(context* c) {
+    LVL res = LVLMESSAGE;
+    for (u i = 0; i < c->dgns.len && res != LVLERROR; i++)
+        if (DGNS[c->dgns.items[i].descr].lvl > res)
+            res = DGNS[c->dgns.items[i].descr].lvl;
     return res;
 }
 void printDgns(context* c) {
-    for (size_t i = 0; i < c->dgns.len; i++)
-        if (!((c->flags & FIGNOREMSGS) != 0 && DGNS[c->dgns.items[i].descr].lvl == LVLMESSAGE || (c->flags & FIGNOREWRNGS) != 0 && DGNS[c->dgns.items[i].descr].lvl == LVLWARNING || uListContains(c->ignoreDgns, c->dgns.items[i].descr)))
-            puts(cptrify(dgnToString(c->dgns.items[i])));
-}
-bool checkErr(context* c) {
-    size_t i;
-    for (i = 0; i < c->dgns.len && DGNS[c->dgns.items[i].descr].lvl != LVLERROR; i++);
-    return i < c->dgns.len;
+    LVL h = highestLVL(c);
+    for (u i = 0; i < c->dgns.len; i++)
+        if (DGNS[c->dgns.items[i].descr].lvl == h &&
+            !((c->flags & FIGNOREMSGS) != 0 && DGNS[c->dgns.items[i].descr].lvl == LVLMESSAGE ||
+              (c->flags & FIGNOREWRNGS) != 0 && DGNS[c->dgns.items[i].descr].lvl == LVLWARNING ||
+              uListContains(c->ignoreDgns, c->dgns.items[i].descr)) &&
+            (c->dgns.items[i].loc.file >= c->inputs.len || !isStd(c, c->inputs.items[c->dgns.items[i].loc.file])))
+            puts(cptrify(dgnToString(c, i)));
 }

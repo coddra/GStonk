@@ -591,6 +591,7 @@ static bool parseOPC(context* c, opc** res, u r) {
             parseHead(c, &as(bopc, *res)->head, r);
         if (!parseBody(c, &as(bopc, *res)->body, r))
             addDgn(c, EMISSINGSYNTAX, "body of control statement");
+        as(bopc, *res)->body2 = opcPtrListDefault();
         if (op == OPIF || op == OPTRY) {
             parseAllCS(c, whitespace);
             if (parseCptr(c, "|>") || parseCptr(c, ".else")) {
@@ -767,8 +768,8 @@ static bool parseFunDef(context* c) {
 
 void parse(context* c) {
     for (u f = 0; f < c->inputs.len; f++) {
-        c->loc.file = c->inputs.items[f];
-        c->text = readAllText(c->loc.file);
+        c->loc.file = f;
+        c->text = readAllText(c->inputs.items[f]);
         c->loc.cl = 0;
         c->loc.ln = 1;
         c->loc.cr = 0;
@@ -791,5 +792,5 @@ void parse(context* c) {
             parseAllCS(c, whitespace);
         }
     }
-    c->loc.file.len = 0;
+    c->loc.file = c->inputs.len;
 }

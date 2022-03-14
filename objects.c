@@ -33,7 +33,6 @@ const attDef ATTRIBUTES[ATTCOUNT] = {
 
 loc locDefault() {
     loc res = { 0 };
-    res.file = stringDefault();
     return res;
 }
 par parDefault() {
@@ -124,6 +123,7 @@ dgn dgnDefault() {
 }
 context contextDefault() {
     context res = { 0 };
+    res.bin = stringDefault();
     res.dgns = dgnListDefault();
     res.funs = funDefListDefault();
     res.typs = typDefListDefault();

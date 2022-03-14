@@ -18,43 +18,10 @@ $ gstonk <source1> [source2] [source...] [-o<output>]
 ```
 Syntax explanations will be added later, in the meantime, be content with the examples.
 ## Examples
+Examples are moved into the examples folder, more will be added later on. You can also peek the std folder.
 ``` gstonk
 ()main():: [main] {
     "Hello World!\n" 1 .puts .ret
-}
-```
-
-``` gstonk
-::u8 (8);
-::string (length::u8);
-::ptr (8);
-
-()toString(x::u8)::string (res::string, ptr::ptr) {
-    ?? #0 0 == {
-        "0" <<|
-    }
-
-    28 .malloc ** ** >`0 1 >string->length::u8 8 + >`1
-
-    9 @@ ** #0 < {
-        10 * 9 +
-        `0 ** @8 ++ >8
-        `1 ++ >`1
-    } \\
-
-    #0 @@ ** 0 > {
-        10 /% 48 + `1 ** -- >`1 <> >1
-    } \\
-
-    `0 <<|
-}
-
-()writeLine(s::string) {
-    #0 1 .puts <<|
-}
-
-()main():: [main] {
-    8 11 * toString(u8)::string writeLine(string):: <<|
 }
 ```
 ## Quotes

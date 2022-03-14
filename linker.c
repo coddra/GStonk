@@ -125,16 +125,29 @@ bool isGOP(context* c, string code, par* pars, OP* op) {
     return false;
 }
 
+static bool hasFile(context* c, string path) {
+    u i = 0;
+    for (; i < c->inputs.len && !stringEquals(absolutePath(path), absolutePath(c->inputs.items[i])); i++);
+    return i != c->inputs.len;
+}
 void addFile(context* c, string path) {
     if (fileExists(path)) {
-        u i = 0;
-        for (; i < c->inputs.len && !stringEquals(absolutePath(path), absolutePath(c->inputs.items[i])); i++);
-        if (i == c->inputs.len)
+        if (!hasFile(c, path))
             stringListAdd(&c->inputs, path);
-        else if (c->loc.file.len == 0)
+        else if (c->loc.file == c->inputs.len)
             addDgn(c, MMULTIFILE, cptrify(path));
-    } else
-        addDgn(c, EFILENOTEXIST, cptrify(path));
+    } else {
+        string tmp = stringClone(c->bin);
+        addCptr(&tmp, "std/");
+        stringAddRange(&tmp, path);
+        if (fileExists(tmp)) {
+            addFile(c, tmp);
+        } else
+            addDgn(c, EFILENOTEXIST, cptrify(path));
+    }
+}
+bool isStd(context* c, string path) {
+    return stringStartsWith(path, c->bin);
 }
 
 static void linkAtt(context* c, list(att) atts) {
@@ -249,8 +262,7 @@ static void linkFun(context* c, list(funDef) funs) {
                     c->flags |= FHASMAIN;
                     c->main = i;
                 }
-            }
-            if ((funs.items[i].flags & FREFERENCED) == 0)
+            } else if ((funs.items[i].flags & FREFERENCED) == 0)
                 addDgnLoc(c, MNOTREFERENCED, funs.items[i].name.loc, cptrify(funs.items[i].name.sign));
             funs.items[i].flags |= FLINKED;
         }

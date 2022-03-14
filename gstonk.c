@@ -37,27 +37,37 @@ void parseArgs(context* c, list(string) args) {
     }
     if (c->inputs.len == 0)
         addDgnEmpty(c, ENOINPUT);
-    if (c->output.items == NULL)
-        c->output = stringFromArray("out", 3);
+    else if (c->output.len == 0) {
+        c->output = stringClone(c->inputs.items[0]);
+        u pos = stringLastPos(c->output, '.');
+        stringRemoveRange(&c->output, pos, c->output.len - pos);
+    }
 }
 
 void exitOnError(context* c) {
-    if (checkErr(c)) {
+    if (highestLVL(c) == LVLERROR) {
         printDgns(c);
         exit(1);
     }
 }
 
-int main(int argc, char** args) {
+int main(int argc, char** argv) {
     init(PARSER);
+
     context c = contextDefault();
+    c.bin = absolutePath(stringify(argv[0]));
+    u pos = stringLastPos(c.bin, '/') + 1;
+    stringRemoveRange(&c.bin, pos, c.bin.len - pos);
+
     list(string) ars = stringListDefault();
     for (u i = 1; i < argc; i++)
-        stringListAdd(&ars, stringify(args[i]));
+        stringListAdd(&ars, stringify(argv[i]));
     parseArgs(&c, ars);
     exitOnError(&c);
+
     parse(&c);
     exitOnError(&c);
+
     link(&c);
     exitOnError(&c);
 
@@ -66,9 +76,7 @@ int main(int argc, char** args) {
         out = stringClone(c.output);
         addCptr(&out, ".s");
     } else {
-        out = absolutePath(stringify(args[0]));
-        u pos = stringLastPos(out, '/') + 1;
-        stringRemoveRange(&out, pos, out.len - pos);
+        out = stringClone(c.bin);
         addCptr(&out, "out.s");
     }
     writeAllText(out, compile(&c));
@@ -81,6 +89,8 @@ int main(int argc, char** args) {
     int res = system(cptrify(cmd));
     if (res)
         addDgn(&c, EGCCFAILED, utos(res));
+    else
+        addDgnEmpty(&c, MSUCCESS);
     if ((c.flags & FASM) == 0)
         remove(cptrify(out));
     printDgns(&c);
