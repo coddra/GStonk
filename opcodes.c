@@ -897,6 +897,16 @@ const opcDef OPS[] = {
         FNONE
     },
 
+    { OPOVER,
+        "^>", ".over",
+        2, 3,
+        "\tmovq\t\t8(%rsp), %rax\n"
+        "\tpushq\t\t%rax\n",
+        NULL,
+        FGENERIC | FIMMEDIATE,
+        FNONE
+    },
+
     { OPFLAGS,
         "##", ".flags",
         0, 1,

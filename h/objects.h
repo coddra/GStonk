@@ -89,7 +89,7 @@ typedef enum {
     OPEVAL,//incomplete
 
     OPDROP,   OPCDROP,
-    OPDUP,    OPSWAP,   OPROTL,   OPROTR,
+    OPDUP,    OPSWAP,   OPROTL,   OPROTR,   OPOVER,
 
     OPFLAGS,
 
