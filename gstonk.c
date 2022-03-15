@@ -40,7 +40,7 @@ void parseArgs(context* c, list(string) args) {
         else if (stringEquals(args.items[i], statstr(FLYCHECKFLAG)))
             c->flags |= FFLYCHECK;
         else
-            addFile(c, args.items[i]);
+            addFile(c, args.items[i], c->loc);
     }
     if (c->inputs.len == 0)
         addDgnEmpty(c, ENOINPUT);
@@ -86,6 +86,7 @@ int main(int argc, char** argv) {
     init(PARSER);
 
     context c = {0};
+    c.loc.file = UINT64_MAX;
     c.bin = getBin(argv[0]);
 
     list(string) ars = stringListDefault();

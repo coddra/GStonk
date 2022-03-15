@@ -104,8 +104,9 @@ u getVar(list(varDef)* l, string sign, bool r) {
 }
 
 bool export(context* c, def* d) {
-    return (d->flags & FREFERENCED) != 0 || (c->flags & FEXPORTALL) != 0 ||
-        hasAtt(c->atts, ATTEXPORT, NULL) || hasAtt(d->attrs, ATTEXPORT, NULL) || hasAtt(d->attrs, ATTMAIN, NULL);
+    return ((c->flags & FFLYCHECK) != 0 && d->name.loc.file == 0) ||
+        (c->flags & FFLYCHECK) == 0 && ((d->flags & FREFERENCED) != 0 || (c->flags & FEXPORTALL) != 0 ||
+         hasAtt(c->atts, ATTEXPORT, NULL) || hasAtt(d->attrs, ATTEXPORT, NULL) || hasAtt(d->attrs, ATTMAIN, NULL));
 }
 
 AFLAG kindToFlag(AKIND k) {
@@ -142,20 +143,24 @@ static bool hasFile(context* c, string path) {
     for (; i < c->inputs.len && !stringEquals(absolutePath(path), absolutePath(c->inputs.items[i])); i++);
     return i != c->inputs.len;
 }
-void addFile(context* c, string path) {
+bool addFile(context* c, string path, loc loc) {
     if (fileExists(path)) {
-        if (!hasFile(c, path))
+        bool res = !hasFile(c, path);
+        if (res)
             stringListAdd(&c->inputs, path);
-        else if (c->loc.file == c->inputs.len)
+        else if (c->loc.file >= c->inputs.len)
             addDgn(c, MMULTIFILE, cptrify(path));
+        return res;
     } else {
         string tmp = stringClone(c->bin);
         addCptr(&tmp, "std/");
         stringAddRange(&tmp, path);
         if (fileExists(tmp)) {
-            addFile(c, tmp);
-        } else
-            addDgn(c, EFILENOTEXIST, cptrify(path));
+            return addFile(c, tmp, loc);
+        } else {
+            addDgnLoc(c, EFILENOTEXIST, loc, cptrify(path));
+            return false;
+        }
     }
 }
 bool isStd(context* c, string path) {
@@ -169,6 +174,9 @@ bool stops(opc* op) {
           (as(bopc, op)->body.flags & as(bopc, op)->els.flags & FSTOPS) != 0));
 }
 
+static bool emitNoRef(context* c, def* d) {
+    return (d->flags & FREFERENCED) == 0 && !((c->flags & FHASMAIN) == 0 || c->funs.items[c->main].name.loc.file != 0);
+}
 static void linkAtt(context* c, list(att) atts, AFLAG t) {
     list(u) ul = {0};
     if (ul.cap == 0)
@@ -200,7 +208,7 @@ static void linkVar(context* c, list(varDef) vars, AFLAG t) {
             lastDef = i;
             linkAtt(c, vars.items[i].attrs, t);
             vars.items[i].name.csign = getCsign(vars.items[i].name.sign);
-            if ((vars.items[i].flags & FREFERENCED) == 0)
+            if ((t & (FGLB | FFLD)) != 0 && emitNoRef(c, as(def, &vars.items[i])) || (t & (FGLB | FFLD)) == 0 && (vars.items[i].flags & FREFERENCED) == 0)
                 addDgnLoc(c, MNOTREFERENCED, vars.items[i].name.loc, cptrify(vars.items[i].name.sign));
             vars.items[i].flags |= FLINKED;
         }
@@ -211,7 +219,7 @@ static void linkTyp(context* c) {
             linkAtt(c, c->typs.items[i].attrs, FTYP);
             linkVar(c, c->typs.items[i].flds, FFLD);
             c->typs.items[i].name.csign = getCsign(c->typs.items[i].name.sign);
-            if ((c->typs.items[i].flags & FREFERENCED) == 0)
+            if (emitNoRef(c, as(def, &c->typs.items[i])))
                 addDgnLoc(c, MNOTREFERENCED, c->typs.items[i].name.loc, cptrify(c->typs.items[i].name.sign));
             c->typs.items[i].flags |= FLINKED;
         }
@@ -289,7 +297,7 @@ static void linkFun(context* c) {
                     c->flags |= FHASMAIN;
                     c->main = i;
                 }
-            } else if ((c->funs.items[i].flags & FREFERENCED) == 0)
+            } else if (emitNoRef(c, as(def, &c->funs.items[i])))
                 addDgnLoc(c, MNOTREFERENCED, c->funs.items[i].name.loc, cptrify(c->funs.items[i].name.sign));
             c->funs.items[i].flags |= FLINKED;
         }
@@ -302,6 +310,6 @@ void link(context* c) {
         if (c->funs.items[c->main].args.len != 0)
             addDgnLoc(c, EWRONGNUMOFARGS, c->funs.items[c->main].name.loc, cptrify(c->funs.items[c->main].name.sign));
     } else
-        addDgn(c, EMISSINGSYNTAX, "function with attribute \"main\"");
+        addDgn(c, EMISSINGSYNTAX, "function with attribute 'main'");
     c->flags |= FLINKED;
 }

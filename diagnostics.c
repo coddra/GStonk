@@ -39,7 +39,7 @@ const dgnDscr DGNS[DGNCOUNT] = {
         LVLERROR,
     },
     { "",
-        "multiple functions found with attributes 'std.main'",
+        "multiple functions found with attribute 'main'",
         LVLERROR,
     },
     { "",
@@ -173,22 +173,25 @@ string dgnToString(context* c, u d) {
     }
     return res;
 }
+static bool includeDgn(context* c, u d, u h) {
+    return ((c->flags & FFLYCHECK) != 0 && c->dgns.items[d].loc.file == 0) ||
+            ((c->flags & FFLYCHECK) == 0 &&
+             ((DGNS[c->dgns.items[d].kind].lvl == h || h > LVLERROR) &&
+              !((c->flags & FIGNOREMSGS) != 0 && DGNS[c->dgns.items[d].kind].lvl == LVLMESSAGE ||
+                (c->flags & FIGNOREWRNGS) != 0 && DGNS[c->dgns.items[d].kind].lvl == LVLWARNING ||
+                uListContains(c->ignoreDgns, c->dgns.items[d].kind)) &&
+              (h >= LVLERROR || c->dgns.items[d].loc.file >= c->inputs.len || !isStd(c, c->inputs.items[c->dgns.items[d].loc.file]))));
+}
 LVL highestLVL(context* c) {
     LVL res = LVLMESSAGE;
     for (u i = 0; i < c->dgns.len && res != LVLERROR; i++)
-        if (DGNS[c->dgns.items[i].kind].lvl > res)
+        if (DGNS[c->dgns.items[i].kind].lvl > res && includeDgn(c, i, LVLERROR + 1))
             res = DGNS[c->dgns.items[i].kind].lvl;
     return res;
 }
 void printDgns(context* c) {
     LVL h = highestLVL(c);
     for (u i = 0; i < c->dgns.len; i++)
-        if (((c->flags & FFLYCHECK) != 0 && c->dgns.items[i].loc.file == 0) ||
-            ((c->flags & FFLYCHECK) == 0 &&
-             (DGNS[c->dgns.items[i].kind].lvl == h &&
-              !((c->flags & FIGNOREMSGS) != 0 && DGNS[c->dgns.items[i].kind].lvl == LVLMESSAGE ||
-                (c->flags & FIGNOREWRNGS) != 0 && DGNS[c->dgns.items[i].kind].lvl == LVLWARNING ||
-                uListContains(c->ignoreDgns, c->dgns.items[i].kind)) &&
-              (h == LVLERROR || c->dgns.items[i].loc.file >= c->inputs.len || !isStd(c, c->inputs.items[c->dgns.items[i].loc.file])))))
+        if (includeDgn(c, i, h))
             puts(cptrify(dgnToString(c, i)));
 }

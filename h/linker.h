@@ -22,7 +22,7 @@ AFLAG kindToFlag(AKIND k);
 bool isGOP(context* c, string code, par* pars, OP* op);
 
 string codeFrom(context* c, loc o);
-void addFile(context* c, string path);
+bool addFile(context* c, string path, loc loc);
 bool isStd(context* c, string path);
 
 bool stops(opc* op);

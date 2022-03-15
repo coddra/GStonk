@@ -54,7 +54,7 @@ typedef enum {
     FGDB          = FASM | (1 << 13),
     FSTOPS        = 1 << 14,
     FEXPORTALL    = 1 << 15,
-    FFLYCHECK     = FEXPORTALL | (1 << 16),
+    FFLYCHECK     = 1 << 16,
 } FLAGS;//flags
 typedef enum {
     OPADD,    OPADDF,   OPINC,

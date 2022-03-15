@@ -552,6 +552,8 @@ static bool parseIf(context* c, bopc** res, u r) {
         b->loc = o;
         b->op = OPIF;
         parseIf(c, &b, r);
+        if (stops(as(opc, b)))
+            (*res)->els.flags |= FSTOPS;
         opcPtrListAdd(&(*res)->els.ops, as(opc, b));
     } else if (parseCptr(c, "|>") || parseCptr(c, ".else")) {
         parseAllCS(c, whitespace);
@@ -823,32 +825,34 @@ static bool parseFunDef(context* c) {
     return true;
 }
 
-void parse(context* c) {
-    for (u f = 0; f < c->inputs.len; f++) {
-        c->loc.file = f;
-        c->text = readAllText(c->inputs.items[f]);
-        c->loc.cl = 0;
-        c->loc.ln = 1;
-        c->loc.cr = 0;
-        preprocess(c);
+static void parseFile(context* c, u f) {
+    c->loc.file = f;
+    c->text = readAllText(c->inputs.items[f]);
+    c->loc.cl = 0;
+    c->loc.ln = 1;
+    c->loc.cr = 0;
+    preprocess(c);
+    parseAllCS(c, whitespace);
+    attList a = {0};
+    if (parseAttList(c, &a)) {
+        for (u i = 0; i < a.len; i++)
+            if (a.items[i].kind == ATTUSE && a.items[i].par.kind == KSTR)
+                addFile(c, c->strs.items[a.items[i].par.val.r.i], a.items[i].par.loc);
+        attListAddRange(&c->atts, a);
         parseAllCS(c, whitespace);
-        attList a = {0};
-        if (parseAttList(c, &a)) {
-            for (u i = 0; i < a.len; i++)
-                if (a.items[i].kind == ATTUSE && a.items[i].par.kind == KSTR)
-                    addFile(c, c->strs.items[a.items[i].par.val.r.i]);
-            attListAddRange(&c->atts, a);
-            parseAllCS(c, whitespace);
-        }
-        while(neof(c)) {
-            if (!(parseFunDef(c) || parseTypDef(c) || parseGlbDef(c))) {
-                loc o = c->loc;
-                parseAllNot(c, whitespace);
-                addDgnLoc(c, EUNRECTOKEN, o, cptrify(codeFrom(c, o)));
-            }
-            parseAllCS(c, whitespace);
-        }
-        free(c->text.items);
     }
+    while(neof(c)) {
+        if (!(parseFunDef(c) || parseTypDef(c) || parseGlbDef(c))) {
+            loc o = c->loc;
+            parseAllNot(c, whitespace);
+            addDgnLoc(c, EUNRECTOKEN, o, cptrify(codeFrom(c, o)));
+        }
+        parseAllCS(c, whitespace);
+    }
+    free(c->text.items);
+}
+void parse(context* c) {
+    for (u f = 0; f < c->inputs.len; f++)
+        parseFile(c, f);
     c->loc.file = c->inputs.len;
 }

@@ -17,7 +17,6 @@
 ::string (length::u8);
 
 ::exception (message::string);
-
 ::ptr (8);
 
 ()isOverflow(flags::u8)::bool { ;;probably does not work properly
