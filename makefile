@@ -15,7 +15,8 @@ clean:
 	rm -rf $(OBJS) $(DFILES)
 	make -C examples clean
 
-examples: $(XMPLS)
+examples:
+	make -C examples all
 
 $(OBJS):
 -include $(DFILES)

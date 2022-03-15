@@ -537,6 +537,28 @@ static bool parseToken(context* c) {
         addDgnLoc(c, EUNRECTOKEN, o, cptrify(codeFrom(c, o)));
     return res;
 }
+static bool parseIf(context* c, bopc** res, u r) {
+    parseHead(c, &(*res)->head, r);
+    if (stops(as(opc, *res)))
+        return true;
+    if (parseBody(c, &(*res)->body, r))
+        parseAllCS(c, whitespace);
+    else
+        addDgn(c, EMISSINGSYNTAX, "body of if statement");
+    loc o = c->loc;
+    if (parseCptr(c, "|?") || parseCptr(c, ".elif")) {
+        parseAllCS(c, whitespace);
+        bopc* b = new(bopc);
+        b->loc = o;
+        b->op = OPIF;
+        parseIf(c, &b, r);
+        opcPtrListAdd(&(*res)->els.ops, as(opc, b));
+    } else if (parseCptr(c, "|>") || parseCptr(c, ".else")) {
+        parseAllCS(c, whitespace);
+        parseBody(c, &(*res)->els, r);
+    }
+    return true;
+}
 static bool parseOPC(context* c, opc** res, u r) {
     loc o = c->loc;
     if (!parseC(c, '.') || !parseAllCS(c, letters))
@@ -599,40 +621,22 @@ static bool parseOPC(context* c, opc** res, u r) {
         (*res)->loc = o;
         (*res)->op = op;
         parseAllCS(c, whitespace);
-        if (op == OPIF || op == OPWHILE)
+        if (op == OPIF)
+            parseIf(c, as(bopc*, res), r);
+        else if (op == OPWHILE) {
             if (parseHead(c, &as(bopc, *res)->head, r))
                 parseAllCS(c, whitespace);
-        if (stops(*res))
-            return true;
-        if (!parseBody(c, &as(bopc, *res)->body, r))
-            addDgn(c, EMISSINGSYNTAX, "body of control statement");
-        reset(&as(bopc, *res)->els, body);
-        if (op == OPIF || op == OPTRY) {
-            parseAllCS(c, whitespace);
-            if (parseCptr(c, "|>") || parseCptr(c, ".else")) {
+            if (!stops(*res) && !parseBody(c, &as(bopc, *res)->body, r))
+                addDgn(c, EMISSINGSYNTAX, "body of while loop");
+        } else if (op == OPTRY) {
+            if (parseBody(c, &as(bopc, *res)->body, r))
+                parseAllCS(c, whitespace);
+            else
+                addDgn(c, EMISSINGSYNTAX, "body of try statement");
+            if (parseCptr(c, "|>") || parseCptr(c, ".catch")) {
                 parseAllCS(c, whitespace);
                 if (!parseBody(c, &as(bopc, *res)->els, r))
-                    addDgn(c, EMISSINGSYNTAX, "body of else branch");
-            } else if (op == OPIF) {
-                bopc* last = as(bopc, *res);
-                bopc* elif;
-                while (parseCptr(c, "|?") || parseCptr(c, ".elif")) {
-                    elif = new(bopc);
-                    parseHead(c, &elif->head, r);
-                    parseAllCS(c, whitespace);
-                    if (!parseBody(c, &elif->body, r))
-                        addDgn(c, EMISSINGSYNTAX, "body of else branch");
-                    else
-                        parseAllCS(c, whitespace);
-                    reset(&last->els, body);
-                    opcPtrListAdd(&as(bopc, last)->els.ops, as(opc, elif));
-                    last = elif;
-                }
-                if (parseCptr(c, "|>") || parseCptr(c, ".else")) {
-                    parseAllCS(c, whitespace);
-                    if (!parseBody(c, &as(bopc, *res)->els, r))
-                        addDgn(c, EMISSINGSYNTAX, "body of else branch");
-                }
+                    addDgn(c, EMISSINGSYNTAX, "body of catch statement");
             }
         }
     }
