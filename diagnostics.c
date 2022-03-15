@@ -140,23 +140,36 @@ void addDgn(context* c, DGNKIND kind, char* prm) {
     addDgnLoc(c, kind, c->loc, prm);
 }
 string dgnToString(context* c, u d) {
-    string res = DGNS[c->dgns.items[d].kind].lvl == LVLERROR ? stringify("error: ") : DGNS[c->dgns.items[d].kind].lvl == LVLWARNING ? stringify("warning: ") : stringify("message: ");
-    addCptr(&res, DGNS[c->dgns.items[d].kind].msg);
-    if (c->dgns.items[d].prm != NULL)
-        replaceAllCptr(&res, "$", c->dgns.items[d].prm);
-    addCptr(&res, "\n");
-    if (c->dgns.items[d].loc.file < c->inputs.len) {
-        addCptr(&res, "\tin file '");
-        stringAddRange(&res, c->inputs.items[c->dgns.items[d].loc.file]);
-        addCptr(&res, "', at line: ");
+    string res;
+    if (c->flags & FFLYCHECK) {
+        res = stringClone(c->inputs.items[c->dgns.items[d].loc.file]);
+        stringAdd(&res, ':');
         addCptr(&res, utos(c->dgns.items[d].loc.ln));
-        addCptr(&res, ", column: ");
-        addCptr(&res, utos(c->dgns.items[d].loc.cl));
-    }
-    if ((DGNS[c->dgns.items[d].kind].lvl & (LVLWARNING | LVLMESSAGE)) != 0) {
-        addCptr(&res, " (-");
-        addCptr(&res, DGNS[c->dgns.items[d].kind].id);
-        addCptr(&res, ")");
+        stringAdd(&res, ':');
+        addCptr(&res, utos(c->dgns.items[d].loc.cl + 1));
+        addCptr(&res, DGNS[c->dgns.items[d].kind].lvl == LVLERROR ? ":error:" : DGNS[c->dgns.items[d].kind].lvl == LVLWARNING ? ":warning:" : ":message:");
+        addCptr(&res, DGNS[c->dgns.items[d].kind].msg);
+        if (c->dgns.items[d].prm != NULL)
+            replaceAllCptr(&res, "$", c->dgns.items[d].prm);
+    } else {
+        res = stringify(DGNS[c->dgns.items[d].kind].lvl == LVLERROR ? "error: " : DGNS[c->dgns.items[d].kind].lvl == LVLWARNING ? "warning: " : "message: ");
+        addCptr(&res, DGNS[c->dgns.items[d].kind].msg);
+        if (c->dgns.items[d].prm != NULL)
+            replaceAllCptr(&res, "$", c->dgns.items[d].prm);
+        addCptr(&res, "\n");
+        if (c->dgns.items[d].loc.file < c->inputs.len) {
+            addCptr(&res, "\tin file '");
+            stringAddRange(&res, c->inputs.items[c->dgns.items[d].loc.file]);
+            addCptr(&res, "', at line: ");
+            addCptr(&res, utos(c->dgns.items[d].loc.ln));
+            addCptr(&res, ", column: ");
+            addCptr(&res, utos(c->dgns.items[d].loc.cl));
+        }
+        if ((DGNS[c->dgns.items[d].kind].lvl & (LVLWARNING | LVLMESSAGE)) != 0) {
+            addCptr(&res, " (-");
+            addCptr(&res, DGNS[c->dgns.items[d].kind].id);
+            addCptr(&res, ")");
+        }
     }
     return res;
 }
@@ -170,10 +183,12 @@ LVL highestLVL(context* c) {
 void printDgns(context* c) {
     LVL h = highestLVL(c);
     for (u i = 0; i < c->dgns.len; i++)
-        if (DGNS[c->dgns.items[i].kind].lvl == h &&
-            !((c->flags & FIGNOREMSGS) != 0 && DGNS[c->dgns.items[i].kind].lvl == LVLMESSAGE ||
-              (c->flags & FIGNOREWRNGS) != 0 && DGNS[c->dgns.items[i].kind].lvl == LVLWARNING ||
-              uListContains(c->ignoreDgns, c->dgns.items[i].kind)) &&
-            (h == LVLERROR || c->dgns.items[i].loc.file >= c->inputs.len || !isStd(c, c->inputs.items[c->dgns.items[i].loc.file])))
+        if (((c->flags & FFLYCHECK) != 0 && c->dgns.items[i].loc.file == 0) ||
+            ((c->flags & FFLYCHECK) == 0 &&
+             (DGNS[c->dgns.items[i].kind].lvl == h &&
+              !((c->flags & FIGNOREMSGS) != 0 && DGNS[c->dgns.items[i].kind].lvl == LVLMESSAGE ||
+                (c->flags & FIGNOREWRNGS) != 0 && DGNS[c->dgns.items[i].kind].lvl == LVLWARNING ||
+                uListContains(c->ignoreDgns, c->dgns.items[i].kind)) &&
+              (h == LVLERROR || c->dgns.items[i].loc.file >= c->inputs.len || !isStd(c, c->inputs.items[c->dgns.items[i].loc.file])))))
             puts(cptrify(dgnToString(c, i)));
 }

@@ -9,6 +9,8 @@ string getRegister(char name, u size);
 
 bool hasAtt(list(att) atts, ATTKIND kind, att* res);
 
+bool export(context* c, def* d);
+
 u getFun(context* c, string sign, bool r);
 u getTyp(context* c, string sign, bool r);
 u getGlb(context* c, string sign, bool r);

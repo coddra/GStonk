@@ -387,7 +387,7 @@ string compile(context* c) {
             "\tmovq\t\t$1, %rdi\n"
             "\tsyscall\n");
     for (u i = 0; i < c->funs.len; i++)
-        if (c->funs.items[i].body.flags & FPARSED)
+        if (export(c, as(def, &c->funs.items[i])))
             stringAddRange(&res, compFun(c, i));
     addCptr(&res, ".addr");
     addCptr(&res, utos(c->addr));
@@ -398,7 +398,7 @@ string compile(context* c) {
             ".excrsp:\n"
             "\t.zero\t\t8\n");
     for (u i = 0; i < c->glbs.len; i++)
-        if (c->glbs.items[i].flags & FREFERENCED)
+        if (export(c, as(def, &c->glbs.items[i])))
             stringAddRange(&res, compGlb(c, i));
     for (u i = 0; i < c->strs.len; i++)
         stringAddRange(&res, compStr(c, i));

@@ -103,6 +103,11 @@ u getVar(list(varDef)* l, string sign, bool r) {
     return res;
 }
 
+bool export(context* c, def* d) {
+    return (d->flags & FREFERENCED) != 0 || (c->flags & FEXPORTALL) != 0 ||
+        hasAtt(c->atts, ATTEXPORT, NULL) || hasAtt(d->attrs, ATTEXPORT, NULL) || hasAtt(d->attrs, ATTMAIN, NULL);
+}
+
 AFLAG kindToFlag(AKIND k) {
     return k == KNONE ? FNONE : 1 << (k - 1);
 }
@@ -200,15 +205,15 @@ static void linkVar(context* c, list(varDef) vars, AFLAG t) {
             vars.items[i].flags |= FLINKED;
         }
 }
-static void linkTyp(context* c, list(typDef) typs) {
-    for (u i = 0; i < typs.len; i++)
-        if (typs.items[i].flags & FDEFINED) {
-            linkAtt(c, typs.items[i].attrs, FTYP);
-            linkVar(c, typs.items[i].flds, FFLD);
-            typs.items[i].name.csign = getCsign(typs.items[i].name.sign);
-            if ((typs.items[i].flags & FREFERENCED) == 0)
-                addDgnLoc(c, MNOTREFERENCED, typs.items[i].name.loc, cptrify(typs.items[i].name.sign));
-            typs.items[i].flags |= FLINKED;
+static void linkTyp(context* c) {
+    for (u i = 0; i < c->typs.len; i++)
+        if (c->typs.items[i].flags & FDEFINED) {
+            linkAtt(c, c->typs.items[i].attrs, FTYP);
+            linkVar(c, c->typs.items[i].flds, FFLD);
+            c->typs.items[i].name.csign = getCsign(c->typs.items[i].name.sign);
+            if ((c->typs.items[i].flags & FREFERENCED) == 0)
+                addDgnLoc(c, MNOTREFERENCED, c->typs.items[i].name.loc, cptrify(c->typs.items[i].name.sign));
+            c->typs.items[i].flags |= FLINKED;
         }
 }
 static void linkTypList(context* c, list(ref) typs) {
@@ -261,37 +266,37 @@ void linkBody(context* c, body* b, u f, i64* s) {
     }
     b->retc = *s - b->retc;
 }
-static void linkFun(context* c, list(funDef) funs) {
-    for (u i = 0; i < funs.len; i++)
-        if (funs.items[i].flags & FDEFINED) {
-            linkAtt(c, funs.items[i].attrs, FFUN);
-            linkVar(c, funs.items[i].args, FARG);
-            linkVar(c, funs.items[i].locs, FLOC);
-            linkTypList(c, funs.items[i].ret);
-            if (funs.items[i].body.flags & FPARSED) {
+static void linkFun(context* c) {
+    for (u i = 0; i < c->funs.len; i++)
+        if (c->funs.items[i].flags & FDEFINED) {
+            linkAtt(c, c->funs.items[i].attrs, FFUN);
+            linkVar(c, c->funs.items[i].args, FARG);
+            linkVar(c, c->funs.items[i].locs, FLOC);
+            linkTypList(c, c->funs.items[i].ret);
+            if (c->funs.items[i].body.flags & FPARSED) {
                 i64 b = 0;
-                linkBody(c, &funs.items[i].body, i, &b);
+                linkBody(c, &c->funs.items[i].body, i, &b);
                 if (b > 0)
-                    addDgnLoc(c, WSTACKHIGH, funs.items[i].name.loc, utos(b));
-                if ((funs.items[i].body.flags & FSTOPS) == 0)
+                    addDgnLoc(c, WSTACKHIGH, c->funs.items[i].name.loc, utos(b));
+                if ((c->funs.items[i].body.flags & FSTOPS) == 0)
                     addDgnEmptyLoc(c, ENOTSTOPS, c->funs.items[i].body.loc);
             }
-            funs.items[i].name.csign = getCsign(funs.items[i].name.sign);
-            if (hasAtt(funs.items[i].attrs, ATTMAIN, NULL)) {
+            c->funs.items[i].name.csign = getCsign(c->funs.items[i].name.sign);
+            if (hasAtt(c->funs.items[i].attrs, ATTMAIN, NULL)) {
                 if (c->flags & FHASMAIN)
-                    addDgnEmptyLoc(c, EMULTIMAIN, funs.items[i].name.loc);
+                    addDgnEmptyLoc(c, EMULTIMAIN, c->funs.items[i].name.loc);
                 else {
                     c->flags |= FHASMAIN;
                     c->main = i;
                 }
-            } else if ((funs.items[i].flags & FREFERENCED) == 0)
-                addDgnLoc(c, MNOTREFERENCED, funs.items[i].name.loc, cptrify(funs.items[i].name.sign));
-            funs.items[i].flags |= FLINKED;
+            } else if ((c->funs.items[i].flags & FREFERENCED) == 0)
+                addDgnLoc(c, MNOTREFERENCED, c->funs.items[i].name.loc, cptrify(c->funs.items[i].name.sign));
+            c->funs.items[i].flags |= FLINKED;
         }
 }
 void link(context* c) {
-    linkTyp(c, c->typs);
-    linkFun(c, c->funs);
+    linkTyp(c);
+    linkFun(c);
     linkVar(c, c->glbs, FGLB);
     if (c->flags & FHASMAIN) {
         if (c->funs.items[c->main].args.len != 0)

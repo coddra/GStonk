@@ -643,15 +643,11 @@ static bool parseOPC(context* c, opc** res, u r) {
     return s.len != 0 || as(popc, *res)->par.kind != KNONE;
 }
 static bool parseHead(context* c, body* res, u r) {
-    opc* op;
     reset(res, body);
     res->loc = c->loc;
-    if (!parseOPC(c, &op, r))
-        return false;
-    opcPtrListAdd(&res->ops, op);
-    parseAllCS(c, whitespace);
     bool t = true;
     while (t) {
+        opc* op;
         if (parseOPC(c, &op, r)) {
             opcPtrListAdd(&res->ops, op);
             if (stops(op)) {
@@ -663,14 +659,13 @@ static bool parseHead(context* c, body* res, u r) {
                 res->flags |= FSTOPS;
                 t = false;
             }
-        }
-        else
+        } else
             t = parseToken(c);
         if (t)
             parseAllCS(c, whitespace);
     }
     res->flags |= FPARSED;
-    return true;
+    return res->loc.cr != c->loc.cr;
 }
 bool parseBody(context* c, body* res, u r) {
     if (!parseC(c, '{'))
@@ -811,7 +806,7 @@ static bool parseFunDef(context* c) {
     if ((c->funs.items[r].flags & FDEFINED) == 0)
         c->funs.items[r].attrs = a;
     body b = {0};
-    if ((c->funs.items[r].flags & FREFERENCED) != 0 || hasAtt(c->funs.items[r].attrs, ATTMAIN, NULL)) {
+    if (export(c, as(def, &c->funs.items[r]))) {
         if (parseBody(c, &b, r)) {
             if ((c->funs.items[r].flags & FDEFINED) == 0)
                 c->funs.items[r].body = b;

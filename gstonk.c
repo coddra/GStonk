@@ -1,3 +1,4 @@
+#include <limits.h>
 #include "h/shorts.h"
 #include "h/objects.h"
 #include "h/diagnostics.h"
@@ -8,8 +9,10 @@
 char* OFLAG = "-o";
 char* MFLAG = "-m";
 char* WFLAG = "-w";
+char* EXPORTFLAG = "-expall";
 char* GDBFLAG = "-gdb";
 char* ASMFLAG = "-s";
+char* FLYCHECKFLAG = "-flycheck";
 
 void parseArgs(context* c, list(string) args) {
     for (u i = 0; i < args.len; i++) {
@@ -32,6 +35,10 @@ void parseArgs(context* c, list(string) args) {
             c->flags |= FGDB;
         else if (stringEquals(args.items[i], statstr(ASMFLAG)))
             c->flags |= FASM;
+        else if (stringEquals(args.items[i], statstr(EXPORTFLAG)))
+            c->flags |= FEXPORTALL;
+        else if (stringEquals(args.items[i], statstr(FLYCHECKFLAG)))
+            c->flags |= FFLYCHECK;
         else
             addFile(c, args.items[i]);
     }
@@ -51,13 +58,35 @@ void exitOnError(context* c) {
     }
 }
 
+string getBin(char* argz) {
+    string res = absolutePath(stringify(argz));
+    if(res.len == 0) {
+        char buffer[PATH_MAX + 8];
+        FILE *pipe;
+
+        pipe = popen("whereis gstonk", "r");
+
+        fgets(buffer, sizeof(buffer), pipe);
+
+        buffer[strlen(buffer) - 1] = '\0';
+
+        pclose(pipe);
+        res = stringify(buffer);
+        stringRemoveRange(&res, 0, stringPos(res, ' '));
+        u pos = stringPos(res, ' ');
+        if (pos < res.len)
+            stringRemoveRange(&res, pos, res.len - pos);
+    }
+    u pos = stringLastPos(res, '/') + 1;
+    stringRemoveRange(&res, pos, res.len - pos);
+    return res;
+}
+
 int main(int argc, char** argv) {
     init(PARSER);
 
     context c = {0};
-    c.bin = absolutePath(stringify(argv[0]));
-    u pos = stringLastPos(c.bin, '/') + 1;
-    stringRemoveRange(&c.bin, pos, c.bin.len - pos);
+    c.bin = getBin(argv[0]);
 
     list(string) ars = stringListDefault();
     for (u i = 1; i < argc; i++)
@@ -70,6 +99,11 @@ int main(int argc, char** argv) {
 
     link(&c);
     exitOnError(&c);
+
+    if (c.flags & FFLYCHECK) {
+        printDgns(&c);
+        exit(0);
+    }
 
     string out;
     if (c.flags & FASM) {

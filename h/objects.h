@@ -53,6 +53,8 @@ typedef enum {
     FASM          = 1 << 12,
     FGDB          = FASM | (1 << 13),
     FSTOPS        = 1 << 14,
+    FEXPORTALL    = 1 << 15,
+    FFLYCHECK     = FEXPORTALL | (1 << 16),
 } FLAGS;//flags
 typedef enum {
     OPADD,    OPADDF,   OPINC,
@@ -104,6 +106,7 @@ typedef enum {
     ATTSIGNED,
     ATTMAIN,
     ATTUSE,
+    ATTEXPORT,
     ATTCOUNT,
 } ATTKIND;
 typedef enum {

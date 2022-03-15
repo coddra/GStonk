@@ -25,4 +25,9 @@ const attDef ATTRIBUTES[ATTCOUNT] = {
         FNOFLAGS,
         FFILE,
     },
+    { "export",
+        FNONE,
+        FSINGLE,
+        FFUN | FGLB,
+    },
 };

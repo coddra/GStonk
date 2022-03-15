@@ -73,6 +73,8 @@ typedef double d;
         return res;                                                     \
     }                                                                   \
     list(type) type##ListFromArray(type* items, u count) {              \
+        if (count == 0)                                                  \
+            return type##ListDefault();                                 \
         list(type) res = { count, 16, NULL };                           \
         while(res.len > res.cap)                                        \
             res.cap <<= 1;                                              \

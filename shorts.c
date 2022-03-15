@@ -83,7 +83,10 @@ string substring(string str, u index) {
     return stringGetRange(str, index, str.len - index);
 }
 string stringify(char* str) {
-    return stringFromArray(str, strlen(str));
+    if (str)
+        return stringFromArray(str, strlen(str));
+    else
+        return stringFromArray(NULL, 0);
 }
 char* cptrify(string str) {
     char* res = (char*)malloc((str.len + 1) * sizeof(char));
