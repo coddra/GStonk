@@ -5,6 +5,7 @@
 Also, not everything is properly tested.
 ## Installation
 Prerequisites:
+- [git](https://github.com/git/git)
 - [gcc](https://gcc.gnu.org/)
 - [make](https://www.gnu.org/software/make/)
 ``` console
