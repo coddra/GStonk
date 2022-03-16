@@ -213,7 +213,7 @@ typedef struct opcDef_s {
     char* alias;
     u8 argc;
     u8 retc;
-    char* comp;
+    void* comp;
     void (*link)(context* c, opc* o, u f, i64* s);
     FLAGS flags;
     AFLAG arg;
