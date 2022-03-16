@@ -70,8 +70,7 @@ link(EVAL) {
 }
 
 const opcDef OPS[] = {
-    { OPADD,
-        "+", ".add",
+    { "+", ".add",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -82,8 +81,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPADDF,
-        "+.", ".addf",
+    { "+.", ".addf",
         2, 1,
         "\tmovsd\t\t(%rsp), %xmm1\n"
         "\tmovsd\t\t8(%rsp), %xmm0\n"
@@ -95,8 +93,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPINC,
-        "++", ".inc",
+    { "++", ".inc",
         1, 1,
         "\tpopq\t\t%rax\n"
         "\tincq\t\t%rax\n"
@@ -106,8 +103,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPSUB,
-        "-", ".sub",
+    { "-", ".sub",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -118,8 +114,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPSUBF,
-        "-.", ".subf",
+    { "-.", ".subf",
         2, 1,
         "\tmovsd\t\t(%rsp), %xmm1\n"
         "\tmovsd\t\t8(%rsp), %xmm0\n"
@@ -131,8 +126,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPDEC,
-        "--", ".dec",
+    { "--", ".dec",
         1, 1,
         "\tpopq\t\t%rax\n"
         "\tdecq\t\t%rax\n"
@@ -142,8 +136,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPNEG,
-        "~", ".neg",
+    { "~", ".neg",
         1, 1,
         "\tpopq\t\t%rax\n"
         "\tnegq\t\t%rax\n"
@@ -153,8 +146,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPNEGF,
-        "~.", ".negf",
+    { "~.", ".negf",
         1, 1,
         "\tmovsd\t\t(%rsp), %xmm1\n"
         "\txorl\t\t%eax, %eax\n"
@@ -166,8 +158,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPMUL,
-        "*", ".mul",
+    { "*", ".mul",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -178,8 +169,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPMULS,
-        "*-", ".muls",
+    { "*-", ".muls",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -190,8 +180,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPMULF,
-        "*.", ".mulf",
+    { "*.", ".mulf",
         2, 1,
         "\tmovsd\t\t(%rsp), %xmm1\n"
         "\tmovsd\t\t8(%rsp), %xmm0\n"
@@ -203,8 +192,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPDIV,
-        "/", ".div",
+    { "/", ".div",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -216,8 +204,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPDIVS,
-        "/-", ".divs",
+    { "/-", ".divs",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -229,8 +216,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPDIVF,
-        "/.", ".divf",
+    { "/.", ".divf",
         2, 1,
         "\tmovsd\t\t(%rsp), %xmm1\n"
         "\tmovsd\t\t8(%rsp), %xmm0\n"
@@ -242,8 +228,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPMOD,
-        "%", ".mod",
+    { "%", ".mod",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -255,8 +240,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPMODS,
-        "%-", ".mods",
+    { "%-", ".mods",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -268,8 +252,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPMODF,
-        "%.", ".modf",
+    { "%.", ".modf",
         2, 1,
         "\tmovsd\t\t(%rsp), %xmm1\n"
         "\tmovsd\t\t8(%rsp), %xmm0\n"
@@ -281,8 +264,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPDM,
-        "/%", ".dm",
+    { "/%", ".dm",
         2, 2,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -295,8 +277,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPDMS,
-        "/%-", ".dms",
+    { "/%-", ".dms",
         2, 2,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -309,8 +290,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPNOT,
-        "!!", ".not",
+    { "!!", ".not",
         1, 1,
         "\tpopq\t\t%rax\n"
         "\txorl\t\t%ecx, %ecx\n"
@@ -322,8 +302,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPBNOT,
-        "!", ".bnot",
+    { "!", ".bnot",
         1, 1,
         "\tpopq\t\t%rax\n"
         "\tnotq\t\t%rax\n"
@@ -333,8 +312,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPAND,
-        "&&", ".and",
+    { "&&", ".and",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -351,8 +329,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPBAND,
-        "&", ".band",
+    { "&", ".band",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -363,8 +340,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPOR,
-        "||", ".or",
+    { "||", ".or",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -381,8 +357,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPBOR,
-        "|", ".bor",
+    { "|", ".bor",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -393,8 +368,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPXOR,
-        "^^", ".xor",
+    { "^^", ".xor",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -411,8 +385,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPBXOR,
-        "^", ".bxor",
+    { "^", ".bxor",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -423,8 +396,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPSHL,
-        "<<", ".shl",
+    { "<<", ".shl",
         2, 1,
         "\tpopq\t\t%rcx\n"
         "\tpopq\t\t%rax\n"
@@ -435,8 +407,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPSHR,
-        ">>", ".shr",
+    { ">>", ".shr",
         2, 1,
         "\tpopq\t\t%rcx\n"
         "\tpopq\t\t%rax\n"
@@ -447,8 +418,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPSAR,
-        ">>-", ".sar",
+    { ">>-", ".sar",
         2, 1,
         "\tpopq\t\t%rcx\n"
         "\tpopq\t\t%rax\n"
@@ -459,8 +429,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPEQ,
-        "==", ".eq",
+    { "==", ".eq",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -473,8 +442,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPEQF,
-        "==.", ".eqf",
+    { "==.", ".eqf",
         2, 1,
         "\tmovsd\t\t(%rsp), %xmm1\n"
         "\tmovsd\t\t8(%rsp), %xmm0\n"
@@ -488,8 +456,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPNE,
-        "!=", ".neq",
+    { "!=", ".neq",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -502,8 +469,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPNEF,
-        "!=.", ".neqf",
+    { "!=.", ".neqf",
         2, 1,
         "\tmovsd\t\t(%rsp), %xmm1\n"
         "\tmovsd\t\t8(%rsp), %xmm0\n"
@@ -517,8 +483,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPLT,
-        "<", ".lt",
+    { "<", ".lt",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -531,8 +496,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPLTS,
-        "<-", ".lts",
+    { "<-", ".lts",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -545,8 +509,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPLTF,
-        "<.", ".ltf",
+    { "<.", ".ltf",
         2, 1,
         "\tmovsd\t\t(%rsp), %xmm1\n"
         "\tmovsd\t\t8(%rsp), %xmm0\n"
@@ -560,8 +523,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPLE,
-        "<=", ".leq",
+    { "<=", ".leq",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -574,8 +536,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPLES,
-        "<=-", ".leqs",
+    { "<=-", ".leqs",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -588,8 +549,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPLEF,
-        "<=.", ".leqf",
+    { "<=.", ".leqf",
         2, 1,
         "\tmovsd\t\t(%rsp), %xmm1\n"
         "\tmovsd\t\t8(%rsp), %xmm0\n"
@@ -603,8 +563,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPGT,
-        ">", ".gt",
+    { ">", ".gt",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -617,8 +576,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPGTS,
-        ">-", ".gts",
+    { ">-", ".gts",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -631,8 +589,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPGTF,
-        ">.", ".gtf",
+    { ">.", ".gtf",
         2, 1,
         "\tmovsd\t\t(%rsp), %xmm1\n"
         "\tmovsd\t\t8(%rsp), %xmm0\n"
@@ -646,8 +603,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPGE,
-        ">=", ".geq",
+    { ">=", ".geq",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -660,8 +616,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPGES,
-        ">=-", ".geqs",
+    { ">=-", ".geqs",
         2, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -674,8 +629,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPGEF,
-        ">=.", ".geqf",
+    { ">=.", ".geqf",
         2, 1,
         "\tmovsd\t\t(%rsp), %xmm1\n"
         "\tmovsd\t\t8(%rsp), %xmm0\n"
@@ -689,8 +643,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPFTI,
-        ".->", ".fti",
+    { ".->", ".fti",
         1, 1,
         "\tmovsd\t\t(%rsp), %xmm0\n"
         "\tcvtsd2si\t%xmm0, %rax\n"
@@ -700,8 +653,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPITF,
-        "->.", ".itf",
+    { "->.", ".itf",
         1, 1,
         "\tmovq\t\t(%rsp), %rax\n"
         "\tcvtsi2sd\t%rax, %xmm0\n"
@@ -711,8 +663,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPSQRT,
-        "^.", ".sqrt",
+    { "^.", ".sqrt",
         1, 1,
         "\tmovsd\t\t(%rsp), %xmm1\n"
         "\tsqrtsd\t\t%xmm1, %xmm0\n"
@@ -722,8 +673,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPLDAT,
-        "@", ".ldat",
+    { "@", ".ldat",
         1, 1,
         "",
         &linkLDAT,
@@ -731,8 +681,7 @@ const opcDef OPS[] = {
         FINT | FUINT
     },
 
-    { OPSTAT,
-        ">", ".stat",
+    { ">", ".stat",
         2, 0,
         "",
         &linkSTAT,
@@ -740,8 +689,7 @@ const opcDef OPS[] = {
         FUINT
     },
 
-    { OPCLAT,
-        "(@)", ".clat",
+    { "(@)", ".clat",
         0, 1,
         "\tpopq\t\t%rax\n"
         "\tcall\t\t*%rax\n",
@@ -750,8 +698,7 @@ const opcDef OPS[] = {
         FUINT
     },
 
-    { OPRET,
-        "<<|", ".ret",
+    { "<<|", ".ret",
         0, 0,
         "",
         &linkRET,
@@ -759,8 +706,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPLDADDR,
-        "@", ".ldaddr",
+    { "@", ".ldaddr",
         0, 1,
         "",
         NULL,
@@ -768,8 +714,7 @@ const opcDef OPS[] = {
         FFUN | FGLB | FFLD | FLOC | FARG
     },
 
-    { OPST,
-        ">", ".store",
+    { ">", ".store",
         1, 0,
         "",
         NULL,
@@ -777,8 +722,7 @@ const opcDef OPS[] = {
         FGLB | FFLD | FLOC | FARG
     },
 
-    { OPIF,
-        "??", ".if",
+    { "??", ".if",
         1, 0,
         "",
         &linkIF,
@@ -786,8 +730,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPWHILE,
-        "@@", ".while",
+    { "@@", ".while",
         1, 0,
         "",
         &linkWHILE,
@@ -795,8 +738,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPTRY,
-        "?!", ".try",
+    { "?!", ".try",
         0, 0,
         "",
         &linkTRY,
@@ -804,8 +746,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPTHROW,
-        "!!!", ".throw",
+    { "!!!", ".throw",
         1, 0,
         "\tpopq\t\t%rax\n"
         "\tmovq\t\t.excrsp(%rip), %rsp\n"
@@ -819,8 +760,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPEVAL,
-        "", ".eval",
+    { "", ".eval",
         0, 1,
         "",
         &linkEVAL,
@@ -828,8 +768,7 @@ const opcDef OPS[] = {
         FUINT | FINT | FDOUB | FSTR | FFUN | FGLB | FFLD | FLOC | FARG
     },
 
-    { OPDROP,
-        "\\\\", ".drop",
+    { "\\\\", ".drop",
         1, 0,
         "\taddq\t\t$8, %rsp\n",
         NULL,
@@ -837,8 +776,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPCDROP,
-        "?\\", ".cdrop",
+    { "?\\", ".cdrop",
         3, 1,
         "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
@@ -851,8 +789,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPDUP,
-        "**", ".dup",
+    { "**", ".dup",
         1, 2,
         "\tmovq\t\t(%rsp), %rax\n"
         "\tpushq\t\t%rax\n",
@@ -861,8 +798,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPSWAP,
-        "<>", ".swap",
+    { "<>", ".swap",
         2, 2,
         "\tmovq\t\t(%rsp), %rax\n"
         "\txchgq\t\t8(%rsp), %rax\n"
@@ -872,8 +808,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPROTL,
-        "<<>", ".rotl",
+    { "<<>", ".rotl",
         3, 3,
         "\tmovq\t\t(%rsp), %rax\n"
         "\txchgq\t\t8(%rsp), %rax\n"
@@ -884,8 +819,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPROTR,
-        "<>>", ".rotr",
+    { "<>>", ".rotr",
         3, 3,
         "\tmovq\t\t16(%rsp), %rax\n"
         "\txchgq\t\t8(%rsp), %rax\n"
@@ -896,8 +830,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPOVER,
-        "^>", ".over",
+    { "^>", ".over",
         2, 3,
         "\tmovq\t\t8(%rsp), %rax\n"
         "\tpushq\t\t%rax\n",
@@ -906,8 +839,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPFLAGS,
-        "##", ".flags",
+    { "##", ".flags",
         0, 1,
         "\tpushfq\n",
         NULL,
@@ -915,8 +847,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPPRINT,
-        ".put", ".puts",
+    { ".put", ".puts",
         2, 0,
         "\tpopq\t\t%rdi\n"
         "\tpopq\t\t%rsi\n"
@@ -929,8 +860,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPMALLOC,
-        ".mal", ".malloc",
+    { ".mal", ".malloc",
         1, 1,
         "\tpopq\t\t%rdi\n"
         "\tcall\t\tmalloc\n"
@@ -940,8 +870,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPFREE,
-        ".mfr", ".mfree",
+    { ".mfr", ".mfree",
         1, 0,
         "\tpopq\t\t%rdi\n"
         "\tcall\t\tfree\n",
@@ -950,8 +879,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPREALLOC,
-        ".ral", ".realloc",
+    { ".ral", ".realloc",
         2, 1,
         "\tpopq\t\t%rsi\n"
         "\tpopq\t\t%rdi\n"
@@ -962,8 +890,7 @@ const opcDef OPS[] = {
         FNONE
     },
 
-    { OPEXIT,
-        ".ext", ".exit",
+    { ".ext", ".exit",
         1, 0,
         "\tpopq\t\t%rdi\n"
         "\tmovq\t\t$60, %rax\n"

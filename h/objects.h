@@ -209,7 +209,6 @@ typedef struct bopc_s {
 struct context_s;
 typedef struct context_s context;
 typedef struct opcDef_s {
-    OP id;
     char* code;
     char* alias;
     u8 argc;
