@@ -1,4 +1,5 @@
 [use("std.gst")]
+;;what is the sum of all numbers below 1000 that is divisible with 3 or 5
 
 ()bruteforce():: {
     0 1 @@ ** 1000 < {
