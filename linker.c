@@ -287,7 +287,7 @@ static void linkFun(context* c) {
                 if (b > 0)
                     addDgnLoc(c, WSTACKHIGH, c->funs.items[i].name.loc, utos(b));
                 if ((c->funs.items[i].body.flags & FSTOPS) == 0)
-                    addDgnEmptyLoc(c, ENOTSTOPS, c->funs.items[i].body.loc);
+                    addDgnEmptyLoc(c, ENOTSTOPS, c->funs.items[i].name.loc);
             }
             c->funs.items[i].name.csign = getCsign(c->funs.items[i].name.sign);
             if (hasAtt(c->funs.items[i].attrs, ATTMAIN, NULL)) {

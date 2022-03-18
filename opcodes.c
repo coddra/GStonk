@@ -308,6 +308,9 @@ compile(IF) {
     addCptr(&res, utos(c->addr));
     stringAdd(&res, '\n');
     stringAddRange(&res, tmp);
+    addCptr(&res, ".addr");
+    addCptr(&res, utos(c->addr++));
+    addCptr(&res, ":\n");
     if (as(bopc, op)->els.ops.len > 0) {
         tmp.len = 0;
         for (u i = 0; i < as(bopc, op)->els.ops.len; i++)

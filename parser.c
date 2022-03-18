@@ -670,10 +670,12 @@ static bool parseHead(context* c, body* res, u r) {
     return res->loc.cr != c->loc.cr;
 }
 bool parseBody(context* c, body* res, u r) {
+    loc o = c->loc;
     if (!parseC(c, '{'))
         return false;
     parseAllCS(c, whitespace);
     parseHead(c, res, r);
+    res->loc = o;
     if (!parseC(c, '}'))
         addDgn(c, EMISSINGTOKEN, "}");
     return true;
