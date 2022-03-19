@@ -296,6 +296,7 @@ compile(STAT) {
     return res;
 }
 compile(IF) {
+    u addr = c->addr;
     string res = stringDefault();
     for (u i = 0; i < as(bopc, op)->head.ops.len; i++)
         stringAddRange(&res, compOP(c, as(bopc, op)->head.ops.items[i], f));
@@ -304,21 +305,28 @@ compile(IF) {
         stringAddRange(&tmp, compOP(c, as(bopc, op)->body.ops.items[i], f));
     addCptr(&res, "\tpopq\t\t%rax\n"
             "\tcmpq\t\t$0, %rax\n"
-            "\tje\t\t\t.addr");
-    addCptr(&res, utos(c->addr));
+            "\tje\t\t\t.else");
+    addCptr(&res, utos(addr));
     stringAdd(&res, '\n');
     stringAddRange(&res, tmp);
-    addCptr(&res, ".addr");
-    addCptr(&res, utos(c->addr++));
-    addCptr(&res, ":\n");
     if (as(bopc, op)->els.ops.len > 0) {
         tmp.len = 0;
         for (u i = 0; i < as(bopc, op)->els.ops.len; i++)
             stringAddRange(&tmp, compOP(c, as(bopc, op)->els.ops.items[i], f));
-        addCptr(&res, "\tjmp\t\t\t.addr");
-        addCptr(&res, utos(c->addr));
+        addCptr(&res, "\tjmp\t\t\t.endf");
+        addCptr(&res, utos(addr));
         stringAdd(&res, '\n');
+        addCptr(&res, ".else");
+        addCptr(&res, utos(addr));
+        addCptr(&res, ":\n");
         stringAddRange(&res, tmp);
+        addCptr(&res, ".endf");
+        addCptr(&res, utos(addr));
+        addCptr(&res, ":\n");
+    } else {
+        addCptr(&res, ".else");
+        addCptr(&res, utos(addr));
+        addCptr(&res, ":\n");
     }
     return res;
 }
@@ -332,13 +340,16 @@ compile(WHILE) {
         stringAddRange(&tmp, compOP(c, as(bopc, op)->body.ops.items[i], f));
     addCptr(&res, "\tpopq\t\t%rax\n"
             "\tcmpq\t\t$0, %rax\n"
-            "\tje\t\t\t.addr");
-    addCptr(&res, utos(c->addr));
+            "\tje\t\t\t.endw");
+    addCptr(&res, utos(head));
     stringAdd(&res, '\n');
     stringAddRange(&res, tmp);
     addCptr(&res, "\tjmp\t\t\t.addr");
     addCptr(&res, utos(head));
     stringAdd(&res, '\n');
+    addCptr(&res, ".endw");
+    addCptr(&res, utos(head));
+    addCptr(&res, ":\n");
     return res;
 }
 compile(TRY) {
@@ -358,21 +369,21 @@ compile(TRY) {
             "\tmovq\t\t(%rax), %rax\n"
             "\tmovq\t\t%rax, .excrsp(%rip)\n");
     if (as(bopc, op)->body.retc > 0) {
-        addCptr(&res, "\tmovq\t\t%rsp, %rsi\n"
-                "\tmovq\t\t$");
-        addCptr(&res, utos(as(bopc, op)->body.retc * 8));
-        addCptr(&res, ", %rdx\n"
-                "\taddq\t\t%rdx, %rsi\n"
-                "\tmovq\t\t%rsi, %rdi\n"
-                "\taddq\t\t$24, %rdi\n"
-                "\tcall\t\tmemcpy\n"
-                "\taddq\t\t$24, %rsp\n");
+        for (u i = 1; i <= (u)as(bopc, op)->body.retc; i++) {
+            addCptr(&res, "\tmovq\t\t");
+            addCptr(&res, utos((as(bopc, op)->body.retc - i) * 8));
+            addCptr(&res, "(%rsp), %rax\n"
+                    "\tmovq\t\t%rax, ");
+            addCptr(&res, utos((as(bopc, op)->body.retc - i + 3) * 8));
+            addCptr(&res, "(%rsp)\n");
+        }
+        addCptr(&res, "\taddq\t\t$24, %rsp\n");
     }
     if (as(bopc, op)->els.ops.len > 0) {
         string tmp = stringDefault();
         for (u i = 0; i < as(bopc, op)->els.ops.len; i++)
             stringAddRange(&tmp, compOP(c, as(bopc, op)->els.ops.items[i], f));
-        addCptr(&res, "\tjmp\t\t.addr");
+        addCptr(&res, "\tjmp\t\t.endt");
         addCptr(&res, utos(c->addr));
         addCptr(&res, "\n"
                 ".addr");
@@ -380,6 +391,9 @@ compile(TRY) {
         addCptr(&res, ":\n"
                 "\tpushq\t\t%rax\n");
         stringAddRange(&res, tmp);
+        addCptr(&res, ".endt");
+        addCptr(&res, utos(c->addr));
+        addCptr(&res, ":\n");
     }
     return res;
 }
