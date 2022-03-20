@@ -204,15 +204,13 @@ compile(EVAL) {
                     "\tpushq\t\t%rax\n");
         }
     } else if (as(popc, op)->par.kind == KLOC) {
-        addCptr(&res, "\tmovq\t\t");
+        addCptr(&res, "\tpushq\t\t");
         addCptr(&res, utos(as(popc, op)->par.val.r.i * 8 + 8));
-        addCptr(&res, "(%rbp), %rax\n"
-                "\tpushq\t\t%rax\n");
+        addCptr(&res, "(%rbp)\n");
     } else if (as(popc, op)->par.kind == KARG) {
-        addCptr(&res, "\tmovq\t\t");
+        addCptr(&res, "\tpushq\t\t");
         addCptr(&res, utos((c->funs.items[f].args.len + 1 + c->funs.items[f].locs.len - as(popc, op)->par.val.r.i) * 8));
-        addCptr(&res, "(%rbp), %rax\n"
-                "\tpushq\t\t%rax\n");
+        addCptr(&res, "(%rbp)\n");
     } else if (as(popc, op)->par.kind == KFLD) {
         if (c->typs.items[c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].type.i].size < 8 && hasAtt(c->typs.items[c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].type.i].attrs, ATTSIGNED, NULL)) {
             addCptr(&res, "\tpopq\t\t%rbx\n"
