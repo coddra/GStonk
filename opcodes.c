@@ -399,10 +399,8 @@ compile(TRY) {
 const opcDef OPS[] = {
     { "+", ".add",
         2, 1,
-        "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
-        "\taddq\t\t%rbx, %rax\n"
-        "\tpushq\t\t%rax\n",
+        "\taddq\t\t%rax, (%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -422,9 +420,7 @@ const opcDef OPS[] = {
 
     { "++", ".inc",
         1, 1,
-        "\tpopq\t\t%rax\n"
-        "\tincq\t\t%rax\n"
-        "\tpushq\t\t%rax\n",
+        "\tincq\t\t(%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -432,10 +428,8 @@ const opcDef OPS[] = {
 
     { "-", ".sub",
         2, 1,
-        "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
-        "\tsubq\t\t%rbx, %rax\n"
-        "\tpushq\t\t%rax\n",
+        "\tsubq\t\t%rax, (%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -455,9 +449,7 @@ const opcDef OPS[] = {
 
     { "--", ".dec",
         1, 1,
-        "\tpopq\t\t%rax\n"
-        "\tdecq\t\t%rax\n"
-        "\tpushq\t\t%rax\n",
+        "\tdecq\t\t(%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -465,9 +457,7 @@ const opcDef OPS[] = {
 
     { "~", ".neg",
         1, 1,
-        "\tpopq\t\t%rax\n"
-        "\tnegq\t\t%rax\n"
-        "\tpushq\t\t%rax\n",
+        "\tnegq\t\t(%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -487,10 +477,9 @@ const opcDef OPS[] = {
 
     { "*", ".mul",
         2, 1,
-        "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
-        "\tmulq\t\t%rbx\n"
-        "\tpushq\t\t%rax\n",
+        "\tmulq\t\t(%rsp)\n"
+        "\tmovq\t\t%rax, (%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -498,10 +487,9 @@ const opcDef OPS[] = {
 
     { "*-", ".muls",
         2, 1,
-        "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
-        "\timulq\t\t%rbx\n"
-        "\tpushq\t\t%rax\n",
+        "\timulq\t\t(%rsp)\n"
+        "\tmovq\t\t%rax, (%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -631,9 +619,7 @@ const opcDef OPS[] = {
 
     { "!", ".bnot",
         1, 1,
-        "\tpopq\t\t%rax\n"
-        "\tnotq\t\t%rax\n"
-        "\tpushq\t\t%rax\n",
+        "\tnotq\t\t(%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -658,10 +644,8 @@ const opcDef OPS[] = {
 
     { "&", ".band",
         2, 1,
-        "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
-        "\tandq\t\t%rbx, %rax\n"
-        "\tpushq\t\t%rax\n",
+        "\tandq\t\t%rax, (%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -686,10 +670,8 @@ const opcDef OPS[] = {
 
     { "|", ".bor",
         2, 1,
-        "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
-        "\torq\t\t%rbx, %rax\n"
-        "\tpushq\t\t%rax\n",
+        "\torq\t\t%rax, (%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -714,10 +696,8 @@ const opcDef OPS[] = {
 
     { "^", ".bxor",
         2, 1,
-        "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
-        "\txorq\t\t%rbx, %rax\n"
-        "\tpushq\t\t%rax\n",
+        "\txorq\t\t%rax, (%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -726,9 +706,7 @@ const opcDef OPS[] = {
     { "<<", ".shl",
         2, 1,
         "\tpopq\t\t%rcx\n"
-        "\tpopq\t\t%rax\n"
-        "\tshlq\t\t%cl, %rax\n"
-        "\tpushq\t\t%rax\n",
+        "\tshlq\t\t%cl, (%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -737,9 +715,7 @@ const opcDef OPS[] = {
     { ">>", ".shr",
         2, 1,
         "\tpopq\t\t%rcx\n"
-        "\tpopq\t\t%rax\n"
-        "\tshrq\t\t%cl, %rax\n"
-        "\tpushq\t\t%rax\n",
+        "\tshrq\t\t%cl, (%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -748,9 +724,7 @@ const opcDef OPS[] = {
     { ">>-", ".sar",
         2, 1,
         "\tpopq\t\t%rcx\n"
-        "\tpopq\t\t%rax\n"
-        "\tsarq\t\t%cl, %rax\n"
-        "\tpushq\t\t%rax\n",
+        "\tsarq\t\t%cl, (%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -758,12 +732,11 @@ const opcDef OPS[] = {
 
     { "==", ".eq",
         2, 1,
-        "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
         "\txorl\t\t%ecx, %ecx\n"
-        "\tcmpq\t\t%rbx, %rax\n"
+        "\tcmpq\t\t%rax, (%rsp)\n"
         "\tsete\t\t%cl\n"
-        "\tpushq\t\t%rcx\n",
+        "\tmovq\t\t%rcx, (%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -773,11 +746,11 @@ const opcDef OPS[] = {
         2, 1,
         "\tmovsd\t\t(%rsp), %xmm1\n"
         "\tmovsd\t\t8(%rsp), %xmm0\n"
-        "\taddq\t\t$16, %rsp\n"
+        "\taddq\t\t$8, %rsp\n"
         "\txorl\t\t%ecx, %ecx\n"
         "\tucomisd\t\t%xmm0, %xmm1\n"
         "\tsete\t\t%cl\n"
-        "\tpushq\t\t%rcx\n",
+        "\tmovq\t\t%rcx, (%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -785,12 +758,11 @@ const opcDef OPS[] = {
 
     { "!=", ".neq",
         2, 1,
-        "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
         "\txorl\t\t%ecx, %ecx\n"
-        "\tcmpq\t\t%rbx, %rax\n"
+        "\tcmpq\t\t%rax, (%rsp)\n"
         "\tsetne\t\t%cl\n"
-        "\tpushq\t\t%rcx\n",
+        "\tmovq\t\t%rcx, (%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -812,12 +784,11 @@ const opcDef OPS[] = {
 
     { "<", ".lt",
         2, 1,
-        "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
         "\txorl\t\t%ecx, %ecx\n"
-        "\tcmpq\t\t%rbx, %rax\n"
+        "\tcmpq\t\t%rax, (%rsp)\n"
         "\tsetb\t\t%cl\n"
-        "\tpushq\t\t%rcx\n",
+        "\tmovq\t\t%rcx, (%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -825,12 +796,11 @@ const opcDef OPS[] = {
 
     { "<-", ".lts",
         2, 1,
-        "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
         "\txorl\t\t%ecx, %ecx\n"
-        "\tcmpq\t\t%rbx, %rax\n"
+        "\tcmpq\t\t%rax, (%rsp)\n"
         "\tsetl\t\t%cl\n"
-        "\tpushq\t\t%rcx\n",
+        "\tmovq\t\t%rcx, (%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -852,12 +822,11 @@ const opcDef OPS[] = {
 
     { "<=", ".leq",
         2, 1,
-        "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
         "\txorl\t\t%ecx, %ecx\n"
-        "\tcmpq\t\t%rbx, %rax\n"
+        "\tcmpq\t\t%rax, (%rsp)\n"
         "\tsetbe\t\t%cl\n"
-        "\tpushq\t\t%rcx\n",
+        "\tmovq\t\t%rcx, (%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -865,12 +834,11 @@ const opcDef OPS[] = {
 
     { "<=-", ".leqs",
         2, 1,
-        "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
         "\txorl\t\t%ecx, %ecx\n"
-        "\tcmpq\t\t%rbx, %rax\n"
+        "\tcmpq\t\t%rax, (%rsp)\n"
         "\tsetle\t\t%cl\n"
-        "\tpushq\t\t%rcx\n",
+        "\tmovq\t\t%rcx, (%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -892,12 +860,11 @@ const opcDef OPS[] = {
 
     { ">", ".gt",
         2, 1,
-        "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
         "\txorl\t\t%ecx, %ecx\n"
-        "\tcmpq\t\t%rbx, %rax\n"
+        "\tcmpq\t\t%rax, (%rsp)\n"
         "\tseta\t\t%cl\n"
-        "\tpushq\t\t%rcx\n",
+        "\tmovq\t\t%rcx, (%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -905,12 +872,11 @@ const opcDef OPS[] = {
 
     { ">-", ".gts",
         2, 1,
-        "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
         "\txorl\t\t%ecx, %ecx\n"
-        "\tcmpq\t\t%rbx, %rax\n"
+        "\tcmpq\t\t%rax, (%rsp)\n"
         "\tsetg\t\t%cl\n"
-        "\tpushq\t\t%rcx\n",
+        "\tmovq\t\t%rcx, (%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -932,12 +898,11 @@ const opcDef OPS[] = {
 
     { ">=", ".geq",
         2, 1,
-        "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
         "\txorl\t\t%ecx, %ecx\n"
-        "\tcmpq\t\t%rbx, %rax\n"
+        "\tcmpq\t\t%rax, (%rsp)\n"
         "\tsetae\t\t%cl\n"
-        "\tpushq\t\t%rcx\n",
+        "\tmovq\t\t%rcx, (%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -945,12 +910,11 @@ const opcDef OPS[] = {
 
     { ">=-", ".geqs",
         2, 1,
-        "\tpopq\t\t%rbx\n"
         "\tpopq\t\t%rax\n"
         "\txorl\t\t%ecx, %ecx\n"
-        "\tcmpq\t\t%rbx, %rax\n"
+        "\tcmpq\t\t%rax, (%rsp)\n"
         "\tsetge\t\t%cl\n"
-        "\tpushq\t\t%rcx\n",
+        "\tmovq\t\t%rcx, (%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
