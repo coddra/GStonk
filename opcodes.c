@@ -1082,8 +1082,7 @@ const opcDef OPS[] = {
 
     { "**", ".dup",
         1, 2,
-        "\tmovq\t\t(%rsp), %rax\n"
-        "\tpushq\t\t%rax\n",
+        "\tpushq\t\t(%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
@@ -1123,8 +1122,7 @@ const opcDef OPS[] = {
 
     { "^>", ".over",
         2, 3,
-        "\tmovq\t\t8(%rsp), %rax\n"
-        "\tpushq\t\t%rax\n",
+        "\tpushq\t\t8(%rsp)\n",
         NULL,
         FGENERIC | FIMMEDIATE,
         FNONE
