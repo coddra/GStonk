@@ -3,82 +3,9 @@
 
 listDefineDefault(u);
 listDefineVaListInt(u);
-listDefineDefault(char);
-listDefineVaListInt(char)
-string stringDefault() {
-    return charListDefault();
-}
-string* stringNew() {
-    return charListNew();
-}
-string stringFromArray(char* str, u count) {
-    return charListFromArray(str, count);
-}
-string stringClone(string str) {
-    return charListClone(str);
-}
-void stringAdd(string* str, char item) {
-    charListAdd(str, item);
-}
-void stringAddRange(string* str, string other) {
-    if (other.len == 0)
-        return;
-    if (str->cap == 0)
-        *str = charListGetForUse();
-    str->len += other.len;
-    if (str->len > str->cap) {
-        while (str->len > str->cap)
-            str->cap <<= 1;
-        str->items = (char*)realloc(str->items, str->cap * sizeof(char));
-    }
-    memcpy((void*)((ptr)str->items + (str->len - other.len) * sizeof(char)),
-           (void*)other.items,
-           other.len * sizeof(char));
+listDefineDefaultName(char, string);
+listDefineVaListIntName(char, string);
 
-    //charListAddRange(str, other);
-}
-void stringInsert(string* str, char item, u index) {
-    charListInsert(str, item, index);
-}
-void stringInsertRange(string* str, string other, u index) {
-    charListInsertRange(str, other, index);
-}
-void stringRemove(string* str, u index) {
-    charListRemove(str, index);
-}
-void stringRemoveRange(string* str, u index, u count) {
-    charListRemoveRange(str, index, count);
-}
-string stringGetRange(string str, u index, u count) {
-    return charListGetRange(str, index, count);
-}
-bool stringContains(string str, char item) {
-    return charListContains(str, item);
-}
-bool stringRangeEquals(string str, string other, u index) {
-    return charListRangeEquals(str, other, index);
-}
-bool stringStartsWith(string str, string other) {
-    return charListStartsWith(str, other);
-}
-bool stringEndsWith(string str, string other) {
-    return charListEndsWith(str, other);
-}
-void stringRemoveAll(string* str, char c) {
-    charListRemoveAll(str, c);
-}
-void stringReplaceAll(string* str, string old, string repl) {
-    charListReplaceAll(str, old, repl);
-}
-u stringPos(string str, char c) {
-    return charListPos(str, c);
-}
-u stringLastPos(string str, char c) {
-    return charListLastPos(str, c);
-}
-bool stringEquals(string str, string other) {
-    return charListEquals(str, other);
-}
 string substring(string str, u index) {
     return stringGetRange(str, index, str.len - index);
 }

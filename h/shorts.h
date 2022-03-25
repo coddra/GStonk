@@ -24,74 +24,78 @@ typedef int64_t i64;
 typedef double d;
 
 #define list(type) type##List
-#define listDeclare(type)                                               \
+#define listDeclareName(type, name)                                     \
     typedef struct {                                                    \
         u len;                                                          \
         u cap;                                                          \
         type* items;                                                    \
-    } list(type);                                                       \
-    list(type) type##ListDefault();                                     \
-    list(type)* type##ListNew();                                        \
-    list(type) type##ListFromArray(type* items, u count);               \
-    list(type) type##ListClone(list(type) original);                    \
-    void type##ListAdd(list(type)* list, type item);                    \
-    void type##ListAddRange(list(type)* list, list(type) other);        \
-    void type##ListInsert(list(type)* list, type item, u index);        \
-    void type##ListInsertRange(list(type)* list, list(type) other, u index); \
-    void type##ListRemove(list(type)* list, u index);                   \
-    void type##ListRemoveRange(list(type)* list, u index, u count);     \
-    list(type) type##ListGetRange(list(type) list, u index, u count);
-#define listDeclareVaList(type)                                         \
-    list(type) type##ListFromVaList(u count, ...);
-#define listDeclareEquals(type)                                         \
-    listDeclare(type);                                                  \
-    bool type##ListContains(list(type) list, type item);                \
-    bool type##ListRangeEquals(list(type) list, list(type) other, u index); \
-    bool type##ListEquals(list(type) list, list(type) other);           \
-    bool type##ListStartsWith(list(type) list, list(type) other);       \
-    bool type##ListEndsWith(list(type) list, list(type) other);         \
-    void type##ListRemoveAll(list(type)* list, type item);              \
-    void type##ListReplaceAll(list(type)* list, list(type) original, list(type) replacement); \
-    u type##ListPos(list(type) list, type item);                        \
-    u type##ListLastPos(list(type) list, type item);
-#define listDeclareDefault(type)                                        \
-    listDeclareEquals(type);                                            \
+    } name;                                                             \
+    name name##Default();                                               \
+    name* name##New();                                                  \
+    name name##FromArray(type* items, u count);                         \
+    name name##Clone(name original);                                    \
+    void name##Add(name* list, type item);                              \
+    void name##AddRange(name* list, name other);                        \
+    void name##Insert(name* list, type item, u index);                  \
+    void name##InsertRange(name* list, name other, u index);            \
+    void name##Remove(name* list, u index);                             \
+    void name##RemoveRange(name* list, u index, u count);               \
+    name name##GetRange(name list, u index, u count);
+#define listDeclareVaListName(type, name)       \
+    name name##FromVaList(u count, ...);
+#define listDeclareEqualsName(type, name)                               \
+    listDeclareName(type, name);                                        \
+    bool name##Contains(name list, type item);                          \
+    bool name##RangeEquals(name list, name other, u index);             \
+    bool name##Equals(name list, name other);                           \
+    bool name##StartsWith(name list, name other);                       \
+    bool name##EndsWith(name list, name other);                         \
+    void name##RemoveAll(name* list, type item);                        \
+    void name##ReplaceAll(name* list, name original, name replacement); \
+    u name##Pos(name list, type item);                                  \
+    u name##LastPos(name list, type item);
+#define listDeclareDefaultName(type, name)                              \
+    listDeclareEqualsName(type, name);                                  \
     bool type##Equals(type left, type right)
+#define listDeclare(type) listDeclareName(type, type##List)
+#define listDeclareVaList(type) listDeclareVaListName(type, type##List)
+#define listDeclareDefault(type) listDeclareDefaultName(type, type##List)
+#define listDeclareEquals(type) listDeclareEqualsName(type, type##List)
 
-#define listDefine(type)                                                \
-    list(type) type##ListDefault() {                                    \
-        list(type) res = { 0 };                                         \
+#define listDefineName(type, name)                                      \
+    name name##Default() {                                    \
+        name res = { 0 };                                         \
         return res;                                                     \
     }                                                                   \
-    list(type) type##ListGetForUse() {                                  \
-        list(type) res = { 0, 16, (type*)malloc(16 * sizeof(type)) };   \
+    name name##GetForUse() {                                  \
+        name res = { 0, 16, (type*)malloc(16 * sizeof(type)) };   \
         return res;                                                     \
     }                                                                   \
-    list(type)* type##ListNew() {                                       \
-        list(type)* res = malloc(sizeof(list(type)));                   \
-        *res = type##ListDefault();                                     \
+    name* name##New() {                                       \
+        name* res = malloc(sizeof(name));                   \
+        *res = name##Default();                                     \
         return res;                                                     \
     }                                                                   \
-    list(type) type##ListFromArray(type* items, u count) {              \
+    name name##FromArray(type* items, u count) {              \
         if (count == 0)                                                  \
-            return type##ListDefault();                                 \
-        list(type) res = { count, 16, NULL };                           \
+            return name##Default();                                 \
+        name res = { count, 16, NULL };                           \
         while(res.len > res.cap)                                        \
             res.cap <<= 1;                                              \
         res.items = (type*)malloc(res.cap * sizeof(type));              \
         memcpy(res.items, items, res.len);                              \
         return res;                                                     \
     }                                                                   \
-    list(type) type##ListClone(list(type) original) {                   \
+    name name##Clone(name original) {                   \
         if (original.cap == 0)                                           \
             return original;                                            \
-        list(type) res = { original.len, original.cap, (type*)malloc(original.cap * sizeof(type)) }; \
+        name res = { original.len, original.cap, (type*)malloc(original.cap * sizeof(type)) }; \
         memcpy(res.items, original.items, original.len);                \
         return res;                                                     \
     }                                                                   \
-    void type##ListAdd(list(type)* list, type item) {                   \
+    void name##Add(name* list, type item) {                   \
         if (list->cap == 0)                                               \
-            *list = type##ListGetForUse();                              \
+            *list = name##GetForUse();                              \
         list->len++;                                                     \
         if (list->len > list->cap) {                                      \
             list->cap <<= 1;                                             \
@@ -99,11 +103,11 @@ typedef double d;
         }                                                               \
         list->items[list->len - 1] = item;                                \
     }                                                                   \
-    void type##ListAddRange(list(type)* list, list(type) other) {       \
+    void name##AddRange(name* list, name other) {       \
         if (other.len == 0)                                              \
             return;                                                     \
         if (list->cap == 0)                                               \
-            *list = type##ListGetForUse();                              \
+            *list = name##GetForUse();                              \
         list->len += other.len;                                          \
         if (list->len > list->cap) {                                      \
             while (list->len > list->cap)                                 \
@@ -114,9 +118,9 @@ typedef double d;
                (void*)other.items,                                      \
                other.len * sizeof(type));                               \
     }                                                                   \
-    void type##ListInsert(list(type)* list, type item, u index) {       \
+    void name##Insert(name* list, type item, u index) {       \
         if (list->cap == 0)                                               \
-            *list = type##ListGetForUse();                              \
+            *list = name##GetForUse();                              \
         list->len++;                                                     \
         if (list->len > list->cap) {                                      \
             list->cap <<= 1;                                             \
@@ -127,11 +131,11 @@ typedef double d;
                list->len - index - 1);                                   \
         list->items[index] = item;                                       \
     }                                                                   \
-    void type##ListInsertRange(list(type)* list, list(type) other, u index) { \
+    void name##InsertRange(name* list, name other, u index) { \
         if (other.len == 0)                                              \
             return;                                                     \
         if (list->cap == 0)                                               \
-            *list = type##ListGetForUse();                              \
+            *list = name##GetForUse();                              \
         list->len += other.len;                                         \
         if (list->len > list->cap) {                                     \
             while (list->len > list->cap)                                \
@@ -144,7 +148,7 @@ typedef double d;
         memcpy((void*)((ptr)list->items + index * sizeof(type)),         \
                other.items, other.len);                                 \
     }                                                                   \
-    void type##ListRemove(list(type)* list, u index) {                  \
+    void name##Remove(name* list, u index) {                  \
         memcpy((void*)((ptr)(list->items) + index * sizeof(type)),       \
                (void*)((ptr)(list->items) + (index + 1) * sizeof(type)), \
                list->len - index - 1);                                   \
@@ -155,7 +159,7 @@ typedef double d;
             list->items = (type*)realloc(list->items, list->cap * sizeof(type)); \
         }                                                               \
     }                                                                   \
-    void type##ListRemoveRange(list(type)* list, u index, u count) {    \
+    void name##RemoveRange(name* list, u index, u count) {    \
         memcpy((void*)((ptr)(list->items) + index * sizeof(type)),       \
                (void*)((ptr)(list->items) + (index + count) * sizeof(type)), \
                list->len - index - count);                               \
@@ -166,23 +170,23 @@ typedef double d;
             list->items = (type*)realloc(list->items, list->cap * sizeof(type)); \
         }                                                               \
     }                                                                   \
-    list(type) type##ListGetRange(list(type) list, u index, u count) {  \
+    name name##GetRange(name list, u index, u count) {  \
         if (count == 0) {                                               \
-            list(type) res = { 0 };                                    \
+            name res = { 0 };                                    \
             return res;                                                 \
         }                                                               \
-        list(type) res = { count, 16, NULL };                           \
+        name res = { count, 16, NULL };                           \
         while (res.len > res.cap)                                       \
             res.cap <<= 1;                                              \
         res.items = (type*)malloc(res.cap * sizeof(type));              \
         memcpy(res.items, &list.items[index], count);                   \
         return res;                                                     \
     }
-#define listDefineVaList(type)                                          \
-    list(type) type##ListFromVaList(u count, ...) {                     \
+#define listDefineVaListName(type, name)                                \
+    name name##FromVaList(u count, ...) {                     \
         va_list args;                                                   \
         va_start(args, count);                                          \
-        list(type) res = { count, 16, NULL };                           \
+        name res = { count, 16, NULL };                           \
         while (count > res.cap)                                         \
             res.cap <<= 1;                                              \
         res.items = (type*)malloc(res.cap * sizeof(type));              \
@@ -191,11 +195,11 @@ typedef double d;
         va_end(args);                                                   \
         return res;                                                     \
     }
-#define listDefineVaListInt(type)                                       \
-    list(type) type##ListFromVaList(u count, ...) {                     \
+#define listDefineVaListIntName(type, name)                             \
+    name name##FromVaList(u count, ...) {                     \
         va_list args;                                                   \
         va_start(args, count);                                          \
-        list(type) res = { count, 16, NULL };                           \
+        name res = { count, 16, NULL };                           \
         while (count > res.cap)                                         \
             res.cap <<= 1;                                              \
         res.items = (type*)malloc(res.cap * sizeof(type));              \
@@ -204,15 +208,15 @@ typedef double d;
         va_end(args);                                                   \
         return res;                                                     \
     }
-#define listDefineEquals(type)                                          \
-    listDefine(type)                                                    \
-        bool type##ListContains(list(type) list, type item) {           \
+#define listDefineEqualsName(type, name)                                \
+    listDefineName(type, name)                                          \
+        bool name##Contains(name list, type item) {           \
         for (u i = 0; i < list.len; i++)                                \
             if (type##Equals(list.items[i], item))                      \
                 return true;                                            \
         return false;                                                   \
     }                                                                   \
-    bool type##ListRangeEquals(list(type) list, list(type) other, u index) { \
+    bool name##RangeEquals(name list, name other, u index) { \
         if (other.len + index > list.len)                               \
             return false;                                               \
         if (list.len == 0 && other.len == 0)                              \
@@ -222,51 +226,56 @@ typedef double d;
                 return false;                                           \
         return true;                                                    \
     }                                                                   \
-    bool type##ListEquals(list(type) list, list(type) other) {   \
-        return list.len == other.len && type##ListRangeEquals(list, other, 0); \
+    bool name##Equals(name list, name other) {   \
+        return list.len == other.len && name##RangeEquals(list, other, 0); \
     }                                                                   \
-    bool type##ListStartsWith(list(type) list, list(type) other) { \
-        return other.len <= list.len && type##ListRangeEquals(list, other, 0); \
+    bool name##StartsWith(name list, name other) { \
+        return other.len <= list.len && name##RangeEquals(list, other, 0); \
     }                                                                   \
-    bool type##ListEndsWith(list(type) list, list(type) other) { \
-        return (other.len <= list.len) && type##ListRangeEquals(list, other, list.len - other.len); \
+    bool name##EndsWith(name list, name other) { \
+        return (other.len <= list.len) && name##RangeEquals(list, other, list.len - other.len); \
     }                                                                   \
-    void type##ListRemoveAll(list(type)* list, type item) {             \
+    void name##RemoveAll(name* list, type item) {             \
         for (u i = list->len; i > 0; i--)                                \
             if (type##Equals(list->items[i - 1], item))                  \
-                type##ListRemove(list, i - 1);                          \
+                name##Remove(list, i - 1);                          \
     }                                                                   \
-    void type##ListReplaceAll(list(type)* list, list(type) original, list(type) replacement) { \
+    void name##ReplaceAll(name* list, name original, name replacement) { \
         if (original.len == 0 || list->len < original.len)                \
             return;                                                     \
         uList indexes = uListDefault();                                 \
         for (u i = 0; i <= list->len - original.len; i++)                \
-            if (type##ListRangeEquals(*list, original, i)) {            \
+            if (name##RangeEquals(*list, original, i)) {            \
                 uListAdd(&indexes, i);                                  \
                 i += original.len - 1;                                  \
             }                                                           \
         for (u i = 0; i < indexes.len; i++) {                           \
-            type##ListRemoveRange(list, indexes.items[indexes.len - 1 - i], original.len); \
-            type##ListInsertRange(list, replacement, indexes.items[indexes.len - 1 - i]); \
+            name##RemoveRange(list, indexes.items[indexes.len - 1 - i], original.len); \
+            name##InsertRange(list, replacement, indexes.items[indexes.len - 1 - i]); \
         }                                                               \
     }                                                                   \
-    u type##ListPos(list(type) list, type item) {                      \
+    u name##Pos(name list, type item) {                      \
         u i = 0;                                                        \
         for (; i < list.len && !type##Equals(list.items[i], item); i++); \
         return i;                                                       \
     }                                                                   \
-    u type##ListLastPos(list(type) list, type item) {                  \
+    u name##LastPos(name list, type item) {                  \
         u i = list.len;                                                 \
         for (; i > 0 && !type##Equals(list.items[i - 1], item); i--);   \
         if (i == 0)                                                      \
             return list.len;                                            \
         return i - 1;                                                   \
     }
-#define listDefineDefault(type)                                         \
-    listDefineEquals(type)                                              \
-    bool type##Equals(type left, type right) {                   \
+#define listDefineDefaultName(type, name)                               \
+    listDefineEqualsName(type, name)                                    \
+        bool type##Equals(type left, type right) {                      \
         return left == right;                                           \
     }
+#define listDefine(type) listDefineName(type, type##List)
+#define listDefineVaList(type) listDefineVaListName(type, type##List)
+#define listDefineVaListInt(type) listDefineVaListIntName(type, type##List)
+#define listDefineEquals(type) listDefineEqualsName(type, type##List)
+#define listDefineDefault(type) listDefineDefaultName(type, type##List)
 
 typedef enum {
     SCSADD,
@@ -276,7 +285,7 @@ typedef enum {
 #define set(type) type##Set
 #define aggregate(type) type##Aggregate
 #define range(type) type##Range
-#define setDeclare(type)                                                \
+#define setDeclareName(type, listName)                                  \
     struct type##Set_s;                                                 \
     typedef struct type##Set_s set(type);                               \
     struct type##Set_s {                                                \
@@ -284,7 +293,7 @@ typedef enum {
     };                                                                  \
     typedef struct {                                                    \
         bool (*contains)(set(type)* set, type item);                    \
-        list(type) items;                                               \
+         listName items;                                               \
     } aggregate(type);                                                  \
     typedef struct {                                                    \
         bool (*contains)(set(type)* set, type item);                    \
@@ -302,7 +311,7 @@ typedef enum {
     aggregate(type) type##AggregateDefault();                           \
     type##ComplementSet type##ComplementSetDefault();                   \
     type##CombinedSet type##CombinedSetDefault();                       \
-    set(type)* type##AggregateNew(list(type) list);                     \
+    set(type)* type##AggregateNew(listName list);                       \
     set(type)* type##AggregateFromArray(type* items, u count);          \
     set(type)* type##ComplementSetNew(set(type)* set);                  \
     set(type)* type##CombinedSetNew(set(type)* left, set(type)* right, SETCOMBINATIONSTYLE style); \
@@ -313,8 +322,8 @@ typedef enum {
     bool type##SetContains(set(type)* set, type item)
 #define setDeclareVaList(type)                                          \
     set(type)* type##AggregateFromVaList(u count, ...);
-#define setDeclareCompare(type)                                         \
-    setDeclare(type);                                                   \
+#define setDeclareCompareName(type, listName)                           \
+    setDeclareName(type, listName);                                     \
     typedef struct {                                                    \
         bool (*contains)(set(type)* set, type item);                    \
         bool inclMin;                                                   \
@@ -325,14 +334,17 @@ typedef enum {
     bool type##RangeContains(set(type)* set, type item);                \
     range(type) type##RangeDefault();                                   \
     type##Set* type##RangeNew(type min, type max)
-#define setDeclareDefault(type)                                         \
-    setDeclareCompare(type);                                            \
+#define setDeclareDefaultName(type, listName)                           \
+    setDeclareCompareName(type, listName);                              \
     bool type##LessThan(type left, type right);                         \
     bool type##GreaterThan(type left, type right)
+#define setDeclare(type) setDeclareName(type, type##List);
+#define setDeclareCompare(type) setDeclareCompareName(type, type##List)
+#define setDeclareDefault(type) setDeclareDefaultName(type, type##List)
 
-#define setDefine(type)                                                 \
+#define setDefineName(type, listName)                                   \
     bool type##AggregateContains(set(type)* set, type item) {           \
-        return type##ListContains(as(aggregate(type), set)->items, item); \
+        return listName##Contains(as(aggregate(type), set)->items, item); \
     }                                                                   \
     bool type##ComplementSetContains(set(type)* set, type item) {       \
         return !(*as(type##ComplementSet, set)->orgnl->contains)(as(type##ComplementSet, set)->orgnl, item); \
@@ -345,7 +357,7 @@ typedef enum {
                (as(type##CombinedSet, set)->scs == SCSCRS && (left && right)); \
     }                                                                   \
     aggregate(type) type##AggregateDefault() {                          \
-        list(type) tmp = { 0 };                                         \
+        listName tmp = { 0 };                                         \
         aggregate(type) res = { &type##AggregateContains, tmp };        \
         return res;                                                     \
     }                                                                   \
@@ -357,7 +369,7 @@ typedef enum {
         type##CombinedSet res = { &type##CombinedSetContains, NULL, NULL, SCSADD }; \
         return res;                                                     \
     }                                                                   \
-    type##Set* type##AggregateNew(list(type) items) {                   \
+    type##Set* type##AggregateNew(listName items) {                   \
         set(type)* res = as(set(type), new(aggregate(type)));           \
         *as(aggregate(type), res) = type##AggregateDefault();           \
         as(aggregate(type), res)->items = items;                         \
@@ -378,7 +390,7 @@ typedef enum {
         return res;                                                     \
     }                                                                   \
     set(type)* type##AggregateFromArray(type* items, u count) {         \
-        return type##AggregateNew(type##ListFromArray(items, count));   \
+        return type##AggregateNew(listName##FromArray(items, count));   \
     }                                                                   \
     set(type)* type##SetAdd(set(type)* left, set(type)* right) {        \
         return type##CombinedSetNew(left, right, SCSADD);               \
@@ -421,8 +433,8 @@ typedef enum {
         va_end(args);                                                   \
         return type##AggregateNew(res);                                 \
     }
-#define setDefineCompare(type)                                          \
-    setDefine(type);                                                    \
+#define setDefineCompareName(type, listName)                                \
+    setDefineName(type, listName);                                      \
     bool type##RangeContains(set(type)* set, type item) {               \
         return (type##LessThan(as(range(type), set)->min, item) || as(range(type), set)->inclMin && as(range(type), set)->min == item) && \
                (type##GreaterThan(as(range(type), set)->max, item) || as(range(type), set)->inclMax && as(range(type), set)->max == item); \
@@ -441,14 +453,17 @@ typedef enum {
         as(range(type), res)->max = max;                                 \
         return res;                                                     \
     }
-#define setDefineDefault(type)                                          \
-    setDefineCompare(type);                                             \
+#define setDefineDefaultName(type, listName)                            \
+    setDefineCompareName(type, listName);                               \
     bool type##LessThan(type left, type right) {                        \
         return left < right;                                            \
     }                                                                   \
     bool type##GreaterThan(type left, type right) {                     \
         return left > right;                                            \
     }
+#define setDefine(type) setDefineName(type, type##List)
+#define setDefineCompare(type) setDefineCompareName(type, type##List)
+#define setDefineDefault(type) setDefineDefaultName(type, type##List)
 
 #define reset(obj, type) memset(obj, 0, sizeof(type))
 #define new(type) ((type*)reset(malloc(sizeof(type)), type))
@@ -459,29 +474,10 @@ typedef enum {
 
 listDeclareDefault(u);
 listDeclareVaList(u);
-listDeclareDefault(char);
-listDeclareVaList(char);
-typedef charList string;
-string stringDefault();
-string* stringNew();
-string stringFromArray(char* str, u count);
-string stringClone(string str);
-void stringAdd(string* str, char item);
-void stringAddRange(string* str, string other);
-void stringInsert(string* str, char item, u index);
-void stringInsertRange(string* str, string other, u index);
-void stringRemove(string* str, u index);
-void stringRemoveRange(string* str, u index, u count);
-string stringGetRange(string str, u index, u count);
-bool stringContains(string str, char item);
-bool stringRangeEquals(string str, string other, u index);
-bool stringStartsWith(string str, string other);
-bool stringEndsWith(string str, string other);
-void stringRemoveAll(string* str, char c);
-void stringReplaceAll(string* str, string old, string repl);
-u stringPos(string str, char c);
-u stringLastPos(string str, char c);
-bool stringEquals(string str, string other);
+listDeclareDefaultName(char, string);
+listDeclareVaListName(char, string);
+typedef string charList;
+
 string substring(string str, u index);
 string stringify(char* str);
 char* cptrify(string str);
