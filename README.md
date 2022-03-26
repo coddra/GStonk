@@ -1,7 +1,7 @@
 # GStonk
 [GStonk](https://github.com/Andrew-Reeds/GStonk) is a [concatenative](https://en.wikipedia.org/wiki/Concatenative_programming_language) [stack-oriented](https://en.wikipedia.org/wiki/Stack-oriented_programming) [intermediate](https://en.wikipedia.org/wiki/Intermediate_representation#Intermediate_language) [programming language](https://en.wikipedia.org/wiki/Programming_language).
 ## Disclaimer
-**IMPORTANT! Gstonk is a work in progress. Anything can change at any moment.**
+**IMPORTANT! Gstonk is a work in progress. Some things are still subject to change.**
 Also, not everything is properly tested.
 ## Installation
 Prerequisites:
@@ -18,10 +18,11 @@ $ gstonk <source1> [source2] [source...] [-o<output>]
 ```
 Syntax explanations will be added later on, in the meantime, be content with the examples.
 ## Examples
-Examples are moved into the examples folder. You can also peek the std folder. To compile all examples, run
+Examples are moved into the examples folder. To compile all examples, run
 ``` console
 $ make examples
 ```
+You can also peek the std folder. 
 ## Famous Quotes
 >Don't judge!
 - Andrew Reeds 05/03/2022
