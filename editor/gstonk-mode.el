@@ -82,6 +82,7 @@
                             (setq not-indented nil))))))))))
     (setq forward (+ forward (- cur-indent (current-indentation))))
     (indent-line-to cur-indent)
+    (beginning-of-line)
     (forward-char forward)))
 
 (defun gstonk-align ()
