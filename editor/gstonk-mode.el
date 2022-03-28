@@ -45,7 +45,7 @@
    '("\"\\(\\.\\)" . font-lock-string-face)
    '("\\$[a-z]+" . font-lock-constant-face)
    '("[#`][0-9]+" . font-lock-variable-name-face)
-   '("\\?\\?\\|@@\\|\\?!\\||>\\||\\?\\|\\.\\(if\\|while\\|try\\|else\\|elif\\|catch\\)" . font-lock-keyword-face)
+   '("\\?\\?\\|@@\\|\\?!\\||>\\||\\?\\|<<|\\|\\.\\(if\\|while\\|try\\|else\\|elif\\|catch\\|ret\\)" . font-lock-keyword-face)
    )
   "Highlighting expressions for Gstonk mode.")
 
