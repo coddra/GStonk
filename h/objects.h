@@ -54,7 +54,8 @@ typedef enum {
     FGDB          = FASM | (1 << 13),
     FSTOPS        = 1 << 14,
     FEXPORTALL    = 1 << 15,
-    FFLYCHECK     = 1 << 16,
+    FSO           = 1 << 16,
+    FFLYCHECK     = FSO | (1 << 17),
 } FLAGS;//flags
 typedef enum {
     OPADD,    OPADDF,   OPINC,
@@ -132,6 +133,7 @@ typedef enum {
     EGCCFAILED,
     EWRONGTARGET,
     ENOTSTOPS,
+    EPATHILLEGAL,
 
     WNOSIZE,
     WSTACKHIGH,
@@ -142,6 +144,7 @@ typedef enum {
     MMULTIFILE,
     MNOTREFERENCED,
     MSUCCESS,
+    MUNRECFLAG,
 
     DGNCOUNT,
 } DGNKIND;

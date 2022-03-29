@@ -4,9 +4,6 @@
 #include "h/opcodes.h"
 #include "h/diagnostics.h"
 
-setDeclareDefaultName(char, string);
-setDefineDefaultName(char, string);
-setDefineVaListInt(char);
 static bool parseHead(context* c, body* res, u r);
 static bool skipBody(context* c, body* res);
 

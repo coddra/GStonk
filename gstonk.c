@@ -6,42 +6,64 @@
 #include "h/linker.h"
 #include "h/compiler.h"
 
-char* OFLAG = "-o";
-char* MFLAG = "-m";
-char* WFLAG = "-w";
-char* EXPORTFLAG = "-expall";
-char* GDBFLAG = "-gdb";
-char* ASMFLAG = "-s";
-char* FLYCHECKFLAG = "-flycheck";
+char OUTPUTFLAG = 'o';
+char MALLFLAG = 'm';
+char WALLFLAG = 'w';
+char DGNFLAG = 'd';
+char EXPORTFLAG = 'e';
+char ASMFLAG = 's';
+char SOFLAG = 'S';
+char* GDBFLAG = "--gdb";
+char* FLYCHECKFLAG = "--flycheck";
 
 void parseArgs(context* c, list(string) args) {
-    for (u i = 0; i < args.len; i++) {
-        if (stringStartsWith(args.items[i], statstr(OFLAG))) {
-            if (c->output.len != 0)
-                addDgnEmpty(c, WMULTIOUTPUT);
+    for (u i = 0; i < args.len; i++)
+        if (args.items[i].len > 0 && args.items[i].items[0] == '-') {
+            if (stringEquals(args.items[i], statstr(GDBFLAG)))
+                c->flags |= FGDB;
+            else if (stringEquals(args.items[i], statstr(FLYCHECKFLAG)))
+                c->flags |= FFLYCHECK;
+            else {
+                u o = 0;
+                for (u j = 1; j < args.items[i].len; j++) {
+                    if (args.items[i].items[j] == OUTPUTFLAG) {
+                        o++;
+                        if (i + o >= args.len)
+                            addDgn(c, EMISSINGSYNTAX, "filename");
+                        else if (c->output.len != 0)
+                            addDgnEmpty(c, WMULTIOUTPUT);
+                        else {
+                            c->output = args.items[i + o];
+                            if (!isPathLegal(c->output))
+                                addDgn(c, EPATHILLEGAL, cptrify(c->output));
+                        }
+                    } else if (args.items[i].items[j] == DGNFLAG) {
+                        o++;
+                        if (i + o >= args.len)
+                            addDgn(c, EMISSINGSYNTAX, "diagnostic id");
+                        else
+                            uListAdd(&c->ignoreDgns, getDgn(args.items[i + o]));
+                    } else if (args.items[i].items[j] == MALLFLAG)
+                        c->flags |= FIGNOREMSGS;
+                    else if (args.items[i].items[j] == WALLFLAG)
+                        c->flags |= FIGNOREWRNGS;
+                    else if (args.items[i].items[j] == EXPORTFLAG)
+                        c->flags |= FEXPORTALL;
+                    else if (args.items[i].items[j] == ASMFLAG)
+                        c->flags |= FASM;
+                    else if (args.items[i].items[j] == SOFLAG)
+                        c->flags |= FSO;
+                    else
+                        addDgn(c, MUNRECFLAG, ctcptr(args.items[i].items[j]));
+                }
+                i += o;
+            }
+        } else {
+            if (fileExists(args.items[i]))
+                stringListAdd(&c->inputs, args.items[i]);
             else
-                c->output = substring(args.items[i], 2);
-        } else if (stringStartsWith(args.items[i], statstr(WFLAG))) {
-            if (stringEquals(args.items[i], statstr(WFLAG)))
-                c->flags |= FIGNOREWRNGS;
-            else
-                uListAdd(&c->ignoreDgns, getDgn(substring(args.items[i], 1)));
-        } else if (stringStartsWith(args.items[i], statstr(MFLAG))) {
-            if (stringEquals(args.items[i], statstr(MFLAG)))
-                c->flags |= FIGNOREMSGS;
-            else
-                uListAdd(&c->ignoreDgns, getDgn(substring(args.items[i], 1)));
-        } else if (stringEquals(args.items[i], statstr(GDBFLAG)))
-            c->flags |= FGDB;
-        else if (stringEquals(args.items[i], statstr(ASMFLAG)))
-            c->flags |= FASM;
-        else if (stringEquals(args.items[i], statstr(EXPORTFLAG)))
-            c->flags |= FEXPORTALL;
-        else if (stringEquals(args.items[i], statstr(FLYCHECKFLAG)))
-            c->flags |= FFLYCHECK;
-        else
-            addFile(c, args.items[i], c->loc);
-    }
+                addDgn(c, EFILENOTEXIST, cptrify(args.items[i]));
+        }
     if (c->inputs.len == 0)
         addDgnEmpty(c, ENOINPUT);
     else if (c->output.len == 0) {
@@ -83,6 +105,7 @@ string getBin(char* argz) {
 }
 
 int main(int argc, char** argv) {
+    init(MCX);
     init(PARSER);
 
     context c = {0};

@@ -90,6 +90,10 @@ const dgnDscr DGNS[DGNCOUNT] = {
         "not all codepaths return the controlflow",
         LVLERROR,
     },
+    { "",
+        "path '$' is illegal",
+        LVLERROR,
+    },
 
     { "wnosize",
         "no size attribute is specified for this type",
@@ -124,6 +128,10 @@ const dgnDscr DGNS[DGNCOUNT] = {
         "executable successfully generated",
         LVLMESSAGE,
     },
+    { "munrecf",
+        "flag '$' is not recognized",
+        LVLMESSAGE,
+    },
 };
 
 void addDgnLoc(context* c, DGNKIND kind, loc loc, char* prm) {
@@ -141,13 +149,13 @@ void addDgn(context* c, DGNKIND kind, char* prm) {
 }
 string dgnToString(context* c, u d) {
     string res;
-    if (c->flags & FFLYCHECK) {
+    if (c->flags & FSO) {
         res = stringClone(c->inputs.items[c->dgns.items[d].loc.file]);
         stringAdd(&res, ':');
         addCptr(&res, utos(c->dgns.items[d].loc.ln));
         stringAdd(&res, ':');
         addCptr(&res, utos(c->dgns.items[d].loc.cl + 1));
-        addCptr(&res, DGNS[c->dgns.items[d].kind].lvl == LVLERROR ? ":error:" : DGNS[c->dgns.items[d].kind].lvl == LVLWARNING ? ":warning:" : ":message:");
+        addCptr(&res, DGNS[c->dgns.items[d].kind].lvl == LVLERROR ? ": error:" : DGNS[c->dgns.items[d].kind].lvl == LVLWARNING ? ": warning:" : ": message:");
         addCptr(&res, DGNS[c->dgns.items[d].kind].msg);
         if (c->dgns.items[d].prm != NULL)
             replaceAllCptr(&res, "$", c->dgns.items[d].prm);

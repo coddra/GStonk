@@ -3,7 +3,7 @@
 ;; Copyright (C) 2022 Nádas András <andrew.reeds.mpg@gmail.com>
 ;;
 ;; Author: Andrew Reeds <andrew.reeds.mpg@gmail.com>
-;; URL: https://github.com/coddra/GStonk
+;; URL: https://github.com/Andrew-Reeds/GStonk
 ;; Permission is hereby granted, free of charge, to any person
 ;; obtaining a copy of this software and associated documentation files (the "Software"),
 ;; to deal in the Software without restriction, including without limitation
@@ -175,11 +175,11 @@
 (flycheck-define-checker gstonk
   "A GStonk syntax checker using the GStonk compiler."
   ;;TODO: add "gstonk" to path or provide the absolute path to the binary
-  :command ("gstonk" "-flycheck" source)
+  :command ("gstonk" "--flycheck" source)
   :error-patterns
-  ((info line-start (file-name) ":" line ":" column ":message:" (message) line-end)
-   (warning line-start (file-name) ":" line ":" column ":warning:" (message) line-end)
-   (error line-start (file-name) ":" line ":" column ":error:" (message) line-end))
+  ((info line-start (file-name) ":" line ":" column ": message:" (message) line-end)
+   (warning line-start (file-name) ":" line ":" column ": warning:" (message) line-end)
+   (error line-start (file-name) ":" line ":" column ": error:" (message) line-end))
   :modes gstonk-mode
   )
 
