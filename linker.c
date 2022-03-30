@@ -104,8 +104,8 @@ u getVar(list(varDef)* l, string sign, bool r) {
 }
 
 bool export(context* c, def* d) {
-    return ((c->flags & FFLYCHECK) != 0 && d->name.loc.file == 0) ||
-        (c->flags & FFLYCHECK) == 0 && ((d->flags & FREFERENCED) != 0 || (c->flags & FEXPORTALL) != 0 ||
+    return ((c->flags & FFLYCHECK) == FFLYCHECK && d->name.loc.file == 0) ||
+        (c->flags & FFLYCHECK) != FFLYCHECK && ((d->flags & FREFERENCED) != 0 || (c->flags & FEXPORTALL) != 0 ||
          hasAtt(c->atts, ATTEXPORT, NULL) || hasAtt(d->attrs, ATTEXPORT, NULL) || hasAtt(d->attrs, ATTMAIN, NULL));
 }
 

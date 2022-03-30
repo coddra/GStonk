@@ -124,7 +124,7 @@ int main(int argc, char** argv) {
     link(&c);
     exitOnError(&c);
 
-    if (c.flags & FFLYCHECK) {
+    if ((c.flags & FFLYCHECK) == FFLYCHECK) {
         printDgns(&c);
         exit(0);
     }

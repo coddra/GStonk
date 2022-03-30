@@ -148,14 +148,17 @@ void addDgn(context* c, DGNKIND kind, char* prm) {
     addDgnLoc(c, kind, c->loc, prm);
 }
 string dgnToString(context* c, u d) {
-    string res;
+    string res = {0};
     if (c->flags & FSO) {
-        res = stringClone(c->inputs.items[c->dgns.items[d].loc.file]);
-        stringAdd(&res, ':');
-        addCptr(&res, utos(c->dgns.items[d].loc.ln));
-        stringAdd(&res, ':');
-        addCptr(&res, utos(c->dgns.items[d].loc.cl + 1));
-        addCptr(&res, DGNS[c->dgns.items[d].kind].lvl == LVLERROR ? ": error:" : DGNS[c->dgns.items[d].kind].lvl == LVLWARNING ? ": warning:" : ": message:");
+        if (c->dgns.items[d].loc.file < c->inputs.len) {
+            stringAddRange(&res, c->inputs.items[c->dgns.items[d].loc.file]);
+            stringAdd(&res, ':');
+            addCptr(&res, utos(c->dgns.items[d].loc.ln));
+            stringAdd(&res, ':');
+            addCptr(&res, utos(c->dgns.items[d].loc.cl + 1));
+            addCptr(&res, ": ");
+        }
+        addCptr(&res, DGNS[c->dgns.items[d].kind].lvl == LVLERROR ? "error:" : DGNS[c->dgns.items[d].kind].lvl == LVLWARNING ? "warning:" : "message:");
         addCptr(&res, DGNS[c->dgns.items[d].kind].msg);
         if (c->dgns.items[d].prm != NULL)
             replaceAllCptr(&res, "$", c->dgns.items[d].prm);
@@ -182,8 +185,8 @@ string dgnToString(context* c, u d) {
     return res;
 }
 static bool includeDgn(context* c, u d, u h) {
-    return ((c->flags & FFLYCHECK) != 0 && c->dgns.items[d].loc.file == 0) ||
-            ((c->flags & FFLYCHECK) == 0 &&
+    return ((c->flags & FFLYCHECK) == FFLYCHECK && c->dgns.items[d].loc.file == 0) ||
+            ((c->flags & FFLYCHECK) != FFLYCHECK &&
              ((DGNS[c->dgns.items[d].kind].lvl == h || h > LVLERROR) &&
               !((c->flags & FIGNOREMSGS) != 0 && DGNS[c->dgns.items[d].kind].lvl == LVLMESSAGE ||
                 (c->flags & FIGNOREWRNGS) != 0 && DGNS[c->dgns.items[d].kind].lvl == LVLWARNING ||
