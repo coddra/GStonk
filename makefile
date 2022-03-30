@@ -1,7 +1,7 @@
 CC:=gcc
 CFLAGS:=-O3
 
-OBJS:=$(patsubst %.c,%.o,$(wildcard *.c))
+OBJS:=$(patsubst %.c,%.o,$(wildcard *.c)) $(patsubst %.c,%.o,$(wildcard MCX/*.c))
 DFILES:=$(patsubst %.o,%.d,$(OBJS))
 
 XMPLS:=$(patsubst examples/%.gst,%,$(wildcard examples/*.gst))
@@ -9,13 +9,11 @@ XMPLS:=$(patsubst examples/%.gst,%,$(wildcard examples/*.gst))
 all: gstonk clean
 
 gstonk: $(OBJS)
-	make -C MCX mcx
-	$(CC) $(CFLAGS) -o $@ $(OBJS) ./MCX/mcx.o
+	$(CC) $(CFLAGS) -o $@ $(OBJS)
 
 clean:
 	rm -rf $(OBJS) $(DFILES)
 	make -C examples clean
-	make -C MCX clean
 
 examples:
 	make -C examples all
