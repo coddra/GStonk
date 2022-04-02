@@ -2,26 +2,26 @@
 ;;what is the sum of all numbers below 1000 that is divisible with 3 or 5
 
 ()bruteforce():: {
-    0 1 @@ ** 1000 < {
-        ?? ** 3 % 0 == ^> 5 % 0 == || {
-            ** <<> + <>
+    0 1 .while .dup 1000 < {
+        .if .dup 3 % 0 == .over 5 % 0 == || {
+            .dup .rotr + .swap
         }
         ++
-    } \\ writeLine(u8):: <<|
+    } .drop writeLine(u8):: .ret
 }
 
 ()sumn(n::u8, d::u8)::u8 {
-    #0 #1 / ** ++ * #1 * 2 / <<|
+    #n::u8 #d::u8 / .dup ++ * #d::u8 * 2 / .ret
 }
 ()solve():: {
     999 3  sumn(u8,u8)::u8
     999 5  sumn(u8,u8)::u8 +
     999 15 sumn(u8,u8)::u8 -
-    writeLine(u8):: <<|
+    writeLine(u8):: .ret
 }
 
 ()main():: [main] {
     bruteforce()::
     solve()::
-    <<|
+    .ret
 }
