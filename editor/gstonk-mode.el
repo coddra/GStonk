@@ -55,7 +55,7 @@
   (let ((cur-indent 0) (forward (current-column)))
     (save-excursion
       (beginning-of-line)
-        (if (not (or (bobp) (looking-at "::\\|<>\\|()\\|\\[") (looking-at "^[[:space:]]*$")))
+        (if (not (or (bobp) (looking-at "::\\|<>\\|()\\|\\[")))
             (save-excursion
               (if (looking-at "^[^}\n]*}")
                   (progn
