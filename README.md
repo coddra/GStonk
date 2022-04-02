@@ -2,6 +2,8 @@
 
 [GStonk](https://github.com/coddra/GStonk) is a [concatenative](https://en.wikipedia.org/wiki/Concatenative_programming_language) [stack-oriented](https://en.wikipedia.org/wiki/Stack-oriented_programming) [intermediate](https://en.wikipedia.org/wiki/Intermediate_representation#Intermediate_language) [programming language](https://en.wikipedia.org/wiki/Programming_language).
 
+If you are looking for a similar language but for humans, not computers, check out [Tsoding's Porth](https://gitlab.com/tsoding/porth)
+
 ## Disclaimer
 
 **IMPORTANT! Gstonk is a work in progress. Some things are still subject to change.**
@@ -24,6 +26,8 @@ $ make
 ``` console
 $ gstonk <source1> [source2] [source...] [-o<output>]
 ```
+
+To learn the basics on how to code in GStonk, check out the [GStonk Wiki](https://github.com/coddra/GStonk/wiki)
 
 ## Examples
 
