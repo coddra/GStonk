@@ -2,7 +2,7 @@
 
 [GStonk](https://github.com/coddra/GStonk) is a [concatenative](https://en.wikipedia.org/wiki/Concatenative_programming_language) [stack-oriented](https://en.wikipedia.org/wiki/Stack-oriented_programming) [intermediate](https://en.wikipedia.org/wiki/Intermediate_representation#Intermediate_language) [programming language](https://en.wikipedia.org/wiki/Programming_language).
 
-If you are looking for a similar language but for humans, not computers, check out [Tsoding's Porth](https://gitlab.com/tsoding/porth)
+If you are looking for a similar language but a bit more readable, check out [Tsoding's Porth](https://gitlab.com/tsoding/porth)!
 
 ## Disclaimer
 
