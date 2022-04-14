@@ -1,5 +1,7 @@
 #include <limits.h>
-#include "MCX/mcx.h"
+#include "mcx/mcx.h"
+#include "mcx/list.h"
+#include "mcx/file.h"
 #include "h/objects.h"
 #include "h/diagnostics.h"
 #include "h/parser.h"
@@ -19,9 +21,9 @@ char* FLYCHECKFLAG = "--flycheck";
 void parseArgs(context* c, list(string) args) {
     for (u i = 0; i < args.len; i++)
         if (args.items[i].len > 0 && args.items[i].items[0] == '-') {
-            if (stringEquals(args.items[i], statstr(GDBFLAG)))
+            if (stringEquals(args.items[i], sstr(GDBFLAG)))
                 c->flags |= FGDB;
-            else if (stringEquals(args.items[i], statstr(FLYCHECKFLAG)))
+            else if (stringEquals(args.items[i], sstr(FLYCHECKFLAG)))
                 c->flags |= FFLYCHECK;
             else {
                 u o = 0;
@@ -35,7 +37,7 @@ void parseArgs(context* c, list(string) args) {
                         else {
                             c->output = args.items[i + o];
                             if (!isPathLegal(c->output))
-                                addDgn(c, EPATHILLEGAL, cptrify(c->output));
+                                addDgn(c, EPATHILLEGAL, cptr(c->output));
                         }
                     } else if (args.items[i].items[j] == DGNFLAG) {
                         o++;
@@ -62,7 +64,7 @@ void parseArgs(context* c, list(string) args) {
             if (fileExists(args.items[i]))
                 stringListAdd(&c->inputs, args.items[i]);
             else
-                addDgn(c, EFILENOTEXIST, cptrify(args.items[i]));
+                addDgn(c, EFILENOTEXIST, cptr(args.items[i]));
         }
     if (c->inputs.len == 0)
         addDgnEmpty(c, ENOINPUT);
@@ -81,7 +83,7 @@ void exitOnError(context* c) {
 }
 
 string getBin(char* argz) {
-    string res = absolutePath(stringify(argz));
+    string res = realPath(str(argz));
     if(res.len == 0) {
         char buffer[PATH_MAX + 8];
         FILE *pipe;
@@ -93,7 +95,7 @@ string getBin(char* argz) {
         buffer[strlen(buffer) - 1] = '\0';
 
         pclose(pipe);
-        res = stringify(buffer);
+        res = str(buffer);
         stringRemoveRange(&res, 0, stringPos(res, ' '));
         u pos = stringPos(res, ' ');
         if (pos < res.len)
@@ -105,16 +107,16 @@ string getBin(char* argz) {
 }
 
 int main(int argc, char** argv) {
-    init(MCX);
+    init(FILE);
     init(PARSER);
 
     context c = {0};
     c.loc.file = UINT64_MAX;
     c.bin = getBin(argv[0]);
 
-    list(string) ars = stringListDefault();
+    list(string) ars = {0};
     for (u i = 1; i < argc; i++)
-        stringListAdd(&ars, stringify(argv[i]));
+        stringListAdd(&ars, str(argv[i]));
     parseArgs(&c, ars);
     exitOnError(&c);
 
@@ -132,26 +134,26 @@ int main(int argc, char** argv) {
     string out;
     if (c.flags & FASM) {
         out = stringClone(c.output);
-        addCptr(&out, ".s");
+        catCptr(&out, ".s");
     } else {
         out = stringClone(c.bin);
-        addCptr(&out, "out.s");
+        catCptr(&out, "out.s");
     }
     writeAllText(out, compile(&c));
-    string cmd = stringify("gcc ");
+    string cmd = str("gcc ");
     stringAddRange(&cmd, out);
-    addCptr(&cmd, " -o ");
+    catCptr(&cmd, " -o ");
     stringAddRange(&cmd, c.output);
     if (c.flags & FGDB)
-        addCptr(&cmd, " -ggdb -g3");
+        catCptr(&cmd, " -ggdb -g3");
     else
-        addCptr(&cmd, " -O3");
-    int res = system(cptrify(cmd));
+        catCptr(&cmd, " -O3");
+    int res = system(cptr(cmd));
     if (res)
-        addDgn(&c, EGCCFAILED, utos(res));
+        addDgn(&c, EGCCFAILED, cptr(utos(res)));
     else
         addDgnEmpty(&c, MSUCCESS);
     if ((c.flags & FASM) == 0)
-        remove(cptrify(out));
+        remove(cptr(out));
     printDgns(&c);
 }

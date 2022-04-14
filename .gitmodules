@@ -1,4 +1,3 @@
- 
-[submodule "MCX"]
-	path = MCX
-	url = https://github.com/coddra/MCX
+[submodule "mcx"]
+	path = mcx
+	url = https://github.com/coddra/mcx

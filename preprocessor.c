@@ -1,8 +1,8 @@
 #include "h/preprocessor.h"
 
 void preprocess(context* c) {
-    replaceAllCptr(&c->text, "\r\n", "\n");
-    replaceAllCptr(&c->text, "\r", "\n");
+    stringReplaceAll(&c->text, sstr("\r\n"), sstr("\n"));
+    stringReplaceAll(&c->text, sstr("\r"), sstr("\n"));
     for (char i = '\0'; i < ' '; i++)
         if (i != '\n' && i != '\t')
             stringRemoveAll(&c->text, i);

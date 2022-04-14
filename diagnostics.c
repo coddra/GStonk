@@ -153,33 +153,33 @@ string dgnToString(context* c, u d) {
         if (c->dgns.items[d].loc.file < c->inputs.len) {
             stringAddRange(&res, c->inputs.items[c->dgns.items[d].loc.file]);
             stringAdd(&res, ':');
-            addCptr(&res, utos(c->dgns.items[d].loc.ln));
+            concat(&res, utos(c->dgns.items[d].loc.ln));
             stringAdd(&res, ':');
-            addCptr(&res, utos(c->dgns.items[d].loc.cl + 1));
-            addCptr(&res, ": ");
+            concat(&res, utos(c->dgns.items[d].loc.cl + 1));
+            catCptr(&res, ": ");
         }
-        addCptr(&res, DGNS[c->dgns.items[d].kind].lvl == LVLERROR ? "error:" : DGNS[c->dgns.items[d].kind].lvl == LVLWARNING ? "warning:" : "message:");
-        addCptr(&res, DGNS[c->dgns.items[d].kind].msg);
+        catCptr(&res, DGNS[c->dgns.items[d].kind].lvl == LVLERROR ? "error:" : DGNS[c->dgns.items[d].kind].lvl == LVLWARNING ? "warning:" : "message:");
+        catCptr(&res, DGNS[c->dgns.items[d].kind].msg);
         if (c->dgns.items[d].prm != NULL)
-            replaceAllCptr(&res, "$", c->dgns.items[d].prm);
+            stringReplaceAll(&res, sstr("$"), sstr(c->dgns.items[d].prm));
     } else {
-        res = stringify(DGNS[c->dgns.items[d].kind].lvl == LVLERROR ? "error: " : DGNS[c->dgns.items[d].kind].lvl == LVLWARNING ? "warning: " : "message: ");
-        addCptr(&res, DGNS[c->dgns.items[d].kind].msg);
+        res = str(DGNS[c->dgns.items[d].kind].lvl == LVLERROR ? "error: " : DGNS[c->dgns.items[d].kind].lvl == LVLWARNING ? "warning: " : "message: ");
+        catCptr(&res, DGNS[c->dgns.items[d].kind].msg);
         if (c->dgns.items[d].prm != NULL)
-            replaceAllCptr(&res, "$", c->dgns.items[d].prm);
-        addCptr(&res, "\n");
+            stringReplaceAll(&res, sstr("$"), sstr(c->dgns.items[d].prm));
+        catCptr(&res, "\n");
         if (c->dgns.items[d].loc.file < c->inputs.len) {
-            addCptr(&res, "\tin file '");
+            catCptr(&res, "\tin file '");
             stringAddRange(&res, c->inputs.items[c->dgns.items[d].loc.file]);
-            addCptr(&res, "', at line: ");
-            addCptr(&res, utos(c->dgns.items[d].loc.ln));
-            addCptr(&res, ", column: ");
-            addCptr(&res, utos(c->dgns.items[d].loc.cl));
+            catCptr(&res, "', at line: ");
+            concat(&res, utos(c->dgns.items[d].loc.ln));
+            catCptr(&res, ", column: ");
+            concat(&res, utos(c->dgns.items[d].loc.cl));
         }
         if ((DGNS[c->dgns.items[d].kind].lvl & (LVLWARNING | LVLMESSAGE)) != 0) {
-            addCptr(&res, " (-");
-            addCptr(&res, DGNS[c->dgns.items[d].kind].id);
-            addCptr(&res, ")");
+            catCptr(&res, " (-");
+            catCptr(&res, DGNS[c->dgns.items[d].kind].id);
+            catCptr(&res, ")");
         }
     }
     return res;
@@ -204,5 +204,5 @@ void printDgns(context* c) {
     LVL h = highestLVL(c);
     for (u i = 0; i < c->dgns.len; i++)
         if (includeDgn(c, i, h))
-            puts(cptrify(dgnToString(c, i)));
+            puts(cptr(dgnToString(c, i)));
 }

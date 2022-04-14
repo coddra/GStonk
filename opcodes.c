@@ -73,325 +73,325 @@ link(EVAL) {
 }
 
 compile(RET) {
-    string res = stringDefault();
+    string res = {0};
     if (c->funs.items[f].ret.len == 0) {
-        addCptr(&res, "\tmovq\t\t");
-        addCptr(&res, utos(c->funs.items[f].locs.len * 8 + 8));
-        addCptr(&res, "(%rbp), %rax\n"
+        catCptr(&res, "\tmovq\t\t");
+        concat(&res, utos(c->funs.items[f].locs.len * 8 + 8));
+        catCptr(&res, "(%rbp), %rax\n"
                 "\tmovq\t\t%rbp, %rsp\n"
                 "\tmovq\t\t(%rbp), %rbp\n"
                 "\taddq\t\t$");
-        addCptr(&res, utos((c->funs.items[f].locs.len + c->funs.items[f].args.len + 2) * 8));
-        addCptr(&res, ", %rsp\n"
+        concat(&res, utos((c->funs.items[f].locs.len + c->funs.items[f].args.len + 2) * 8));
+        catCptr(&res, ", %rsp\n"
                 "\tjmp\t\t\t*%rax\n");
     } else {
-        addCptr(&res, "\tmovq\t\t");
-        addCptr(&res, utos(c->funs.items[f].locs.len * 8 + 8));
-        addCptr(&res, "(%rbp), %rax\n"
+        catCptr(&res, "\tmovq\t\t");
+        concat(&res, utos(c->funs.items[f].locs.len * 8 + 8));
+        catCptr(&res, "(%rbp), %rax\n"
                 "\tmovq\t\t(%rbp), %rbx\n");
         for (u i = 0; i < c->funs.items[f].ret.len; i++) {
-            addCptr(&res, "\tmovq\t\t");
-            addCptr(&res, utos((c->funs.items[f].ret.len - i - 1) * 8));
-            addCptr(&res, "(%rsp), %rcx\n"
+            catCptr(&res, "\tmovq\t\t");
+            concat(&res, utos((c->funs.items[f].ret.len - i - 1) * 8));
+            catCptr(&res, "(%rsp), %rcx\n"
                     "\tmovq\t\t%rcx, ");
-            addCptr(&res, itos((c->funs.items[f].locs.len + c->funs.items[f].args.len + 1 - i) * 8));
-            addCptr(&res, "(%rbp)\n");
+            concat(&res, itos((c->funs.items[f].locs.len + c->funs.items[f].args.len + 1 - i) * 8));
+            catCptr(&res, "(%rbp)\n");
         }
-        addCptr(&res, "\tmovq\t\t%rbx, %rbp\n"
+        catCptr(&res, "\tmovq\t\t%rbx, %rbp\n"
                 "\taddq\t\t$");
-        addCptr(&res, utos((c->funs.items[f].locs.len + c->funs.items[f].args.len + 2) * 8));
-        addCptr(&res, ", %rsp\n"
+        concat(&res, utos((c->funs.items[f].locs.len + c->funs.items[f].args.len + 2) * 8));
+        catCptr(&res, ", %rsp\n"
                 "\tjmp\t\t\t*%rax\n");
     }
     return res;
 }
 compile(LDADDR) {
-    string res = stringDefault();
+    string res = {0};
     if (as(popc, op)->par.kind == KFUN) {
-        addCptr(&res, "\tleaq\t\t");
-        stringAddRange(&res, c->funs.items[as(popc, op)->par.val.r.i].name.csign);
-        addCptr(&res, "(%rip), %rax\n"
+        catCptr(&res, "\tleaq\t\t");
+        concat(&res, c->funs.items[as(popc, op)->par.val.r.i].name.csign);
+        catCptr(&res, "(%rip), %rax\n"
                 "\tpushq\t\t%rax\n");
     } else if (as(popc, op)->par.kind == KGLB) {
-        addCptr(&res, "\tleaq\t\t");
-        stringAddRange(&res, c->glbs.items[as(popc, op)->par.val.r.i].name.csign);
-        addCptr(&res, "(%rip), %rax\n"
+        catCptr(&res, "\tleaq\t\t");
+        concat(&res, c->glbs.items[as(popc, op)->par.val.r.i].name.csign);
+        catCptr(&res, "(%rip), %rax\n"
                 "\tpushq\t\t%rax\n");
     } else if (as(popc, op)->par.kind == KLOC) {
-        addCptr(&res, "\tmovq\t\t%rbp, %rax\n"
+        catCptr(&res, "\tmovq\t\t%rbp, %rax\n"
                 "\taddq\t\t$");
-        addCptr(&res, utos(as(popc, op)->par.val.r.i * 8 + 8));
-        addCptr(&res, ", %rax\n"
+        concat(&res, utos(as(popc, op)->par.val.r.i * 8 + 8));
+        catCptr(&res, ", %rax\n"
                 "\tpusq\t\t%rax\n");
     } else if (as(popc, op)->par.kind == KARG) {
-        addCptr(&res, "\tmovq\t\t%rbp, %rax\n"
+        catCptr(&res, "\tmovq\t\t%rbp, %rax\n"
                 "\taddq\t\t$");
-        addCptr(&res, utos((c->funs.items[f].locs.len + 1 + c->funs.items[f].args.len - as(popc, op)->par.val.r.i) * 8));
-        addCptr(&res, ", %rax\n"
+        concat(&res, utos((c->funs.items[f].locs.len + 1 + c->funs.items[f].args.len - as(popc, op)->par.val.r.i) * 8));
+        catCptr(&res, ", %rax\n"
                 "\tpusq\t\t%rax\n");
     } else if (as(popc, op)->par.kind == KFLD) {
-        addCptr(&res, "\tpopq\t\t%rax\n"
+        catCptr(&res, "\tpopq\t\t%rax\n"
                 "\taddq\t\t$");
-        addCptr(&res, utos(c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].offset));
-        addCptr(&res, ", %rax\n"
+        concat(&res, utos(c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].offset));
+        catCptr(&res, ", %rax\n"
                 "\tpushq\t\t%rax\n");
     }
     return res;
 }
 compile(ST) {
-    string res = stringDefault();
+    string res = {0};
     if (as(popc, op)->par.kind == KGLB) {
-        addCptr(&res, "\tpopq\t\t%rax\n"
+        catCptr(&res, "\tpopq\t\t%rax\n"
                 "\tmov");
         stringAdd(&res, getPostfix(c->typs.items[c->glbs.items[as(popc, op)->par.val.r.i].type.i].size));
-        addCptr(&res, "\t\t%");
-        stringAddRange(&res, getRegister('a', c->typs.items[c->glbs.items[as(popc, op)->par.val.r.i].type.i].size));
-        addCptr(&res, ", ");
-        stringAddRange(&res, c->glbs.items[as(popc, op)->par.val.r.i].name.csign);
-        addCptr(&res, "(%rip)\n");
+        catCptr(&res, "\t\t%");
+        concat(&res, getRegister('a', c->typs.items[c->glbs.items[as(popc, op)->par.val.r.i].type.i].size));
+        catCptr(&res, ", ");
+        concat(&res, c->glbs.items[as(popc, op)->par.val.r.i].name.csign);
+        catCptr(&res, "(%rip)\n");
     } else if (as(popc, op)->par.kind == KLOC) {
-        addCptr(&res, "\tpopq\t\t%rax\n"
+        catCptr(&res, "\tpopq\t\t%rax\n"
                 "\tmovq\t\t%rax, ");
-        addCptr(&res, utos(as(popc, op)->par.val.r.i * 8 + 8));
-        addCptr(&res, "(%rbp)\n");
+        concat(&res, utos(as(popc, op)->par.val.r.i * 8 + 8));
+        catCptr(&res, "(%rbp)\n");
     } else if (as(popc, op)->par.kind == KARG) {
-        addCptr(&res, "\tpopq\t\t%rax\n"
+        catCptr(&res, "\tpopq\t\t%rax\n"
                 "\tmovq\t\t%rax, ");
-        addCptr(&res, utos((c->funs.items[f].args.len + 1 + c->funs.items[f].locs.len - as(popc, op)->par.val.r.i) * 8));
-        addCptr(&res, "(%rbp)\n");
+        concat(&res, utos((c->funs.items[f].args.len + 1 + c->funs.items[f].locs.len - as(popc, op)->par.val.r.i) * 8));
+        catCptr(&res, "(%rbp)\n");
     } else if (as(popc, op)->par.kind == KFLD) {
-        addCptr(&res, "\tpopq\t\t%rax\n"
+        catCptr(&res, "\tpopq\t\t%rax\n"
                 "\tpopq\t\t%rbx\n"
                 "\tmov");
         stringAdd(&res, getPostfix(c->typs.items[c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].type.i].size));
-        addCptr(&res, "\t\t%");
-        stringAddRange(&res, getRegister('a', c->typs.items[c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].type.i].size));
-        addCptr(&res, ", ");
-        addCptr(&res, utos(c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].offset));
-        addCptr(&res, "(%rbx)\n");
+        catCptr(&res, "\t\t%");
+        concat(&res, getRegister('a', c->typs.items[c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].type.i].size));
+        catCptr(&res, ", ");
+        concat(&res, utos(c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].offset));
+        catCptr(&res, "(%rbx)\n");
     }
     return res;
 }
 compile(EVAL) {
-    string res = stringDefault();
+    string res = {0};
     if (as(popc, op)->par.kind == KFUN) {
-        addCptr(&res, "\tcall\t\t");
-        stringAddRange(&res, c->funs.items[as(popc, op)->par.val.r.i].name.csign);
+        catCptr(&res, "\tcall\t\t");
+        concat(&res, c->funs.items[as(popc, op)->par.val.r.i].name.csign);
         stringAdd(&res, '\n');
     } else if (as(popc, op)->par.kind == KGLB) {
         if (c->typs.items[c->glbs.items[as(popc, op)->par.val.r.i].type.i].size < 8 && hasAtt(c->typs.items[c->glbs.items[as(popc, op)->par.val.r.i].type.i].attrs, ATTSIGNED, NULL)) {
-            addCptr(&res, "\tmovq\t\t");
-            stringAddRange(&res, c->glbs.items[as(popc, op)->par.val.r.i].name.csign);
-            addCptr(&res, "(%rip), %rax\n"
+            catCptr(&res, "\tmovq\t\t");
+            concat(&res, c->glbs.items[as(popc, op)->par.val.r.i].name.csign);
+            catCptr(&res, "(%rip), %rax\n"
                     "\tshlq\t\t$");
-            char* shift = utos((8 - c->typs.items[c->glbs.items[as(popc, op)->par.val.r.i].type.i].size) * 8);
-            addCptr(&res, shift);
-            addCptr(&res, ", %rax\n"
+            string shift = utos((8 - c->typs.items[c->glbs.items[as(popc, op)->par.val.r.i].type.i].size) * 8);
+            concat(&res, shift);
+            catCptr(&res, ", %rax\n"
                     "\tsarq\t\t$");
-            addCptr(&res, shift);
-            addCptr(&res, ", %rax\n"
+            concat(&res, shift);
+            catCptr(&res, ", %rax\n"
                     "\tpushq\t\t%rax\n");
         } else {
             if (c->typs.items[c->glbs.items[as(popc, op)->par.val.r.i].type.i].size < 4)
-                addCptr(&res, "\txorl\t\t%eax, %eax\n");
-            addCptr(&res, "\tmov");
+                catCptr(&res, "\txorl\t\t%eax, %eax\n");
+            catCptr(&res, "\tmov");
             stringAdd(&res, getPostfix(c->typs.items[c->glbs.items[as(popc, op)->par.val.r.i].type.i].size));
-            addCptr(&res, "\t\t");
-            stringAddRange(&res, c->glbs.items[as(popc, op)->par.val.r.i].name.csign);
-            addCptr(&res, "(%rip), %");
-            stringAddRange(&res, getRegister('a', c->typs.items[c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].type.i].size));
-            addCptr(&res, "\n"
+            catCptr(&res, "\t\t");
+            concat(&res, c->glbs.items[as(popc, op)->par.val.r.i].name.csign);
+            catCptr(&res, "(%rip), %");
+            concat(&res, getRegister('a', c->typs.items[c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].type.i].size));
+            catCptr(&res, "\n"
                     "\tpushq\t\t%rax\n");
         }
     } else if (as(popc, op)->par.kind == KLOC) {
-        addCptr(&res, "\tpushq\t\t");
-        addCptr(&res, utos(as(popc, op)->par.val.r.i * 8 + 8));
-        addCptr(&res, "(%rbp)\n");
+        catCptr(&res, "\tpushq\t\t");
+        concat(&res, utos(as(popc, op)->par.val.r.i * 8 + 8));
+        catCptr(&res, "(%rbp)\n");
     } else if (as(popc, op)->par.kind == KARG) {
-        addCptr(&res, "\tpushq\t\t");
-        addCptr(&res, utos((c->funs.items[f].args.len + 1 + c->funs.items[f].locs.len - as(popc, op)->par.val.r.i) * 8));
-        addCptr(&res, "(%rbp)\n");
+        catCptr(&res, "\tpushq\t\t");
+        concat(&res, utos((c->funs.items[f].args.len + 1 + c->funs.items[f].locs.len - as(popc, op)->par.val.r.i) * 8));
+        catCptr(&res, "(%rbp)\n");
     } else if (as(popc, op)->par.kind == KFLD) {
         if (c->typs.items[c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].type.i].size < 8 && hasAtt(c->typs.items[c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].type.i].attrs, ATTSIGNED, NULL)) {
-            addCptr(&res, "\tpopq\t\t%rbx\n"
+            catCptr(&res, "\tpopq\t\t%rbx\n"
                     "\tmovq\t\t");
-            addCptr(&res, utos(c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].offset));
-            addCptr(&res, "(%rbx), %rax\n"
+            concat(&res, utos(c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].offset));
+            catCptr(&res, "(%rbx), %rax\n"
                     "\tshlq\t\t$");
-            char* shift = utos((8 - c->typs.items[c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].type.i].size) * 8);
-            addCptr(&res, shift);
-            addCptr(&res, ", %rax\n"
+            string shift = utos((8 - c->typs.items[c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].type.i].size) * 8);
+            concat(&res, shift);
+            catCptr(&res, ", %rax\n"
                     "\tsarq\t\t$");
-            addCptr(&res, shift);
-            addCptr(&res, ", %rax\n"
+            concat(&res, shift);
+            catCptr(&res, ", %rax\n"
                     "\tpushq\t\t%rax\n");
         } else {
             if (c->typs.items[c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].type.i].size < 4)
-                addCptr(&res, "\txorl\t\t%eax, %eax\n");
-            addCptr(&res, "\tpopq\t\t%rbx\n"
+                catCptr(&res, "\txorl\t\t%eax, %eax\n");
+            catCptr(&res, "\tpopq\t\t%rbx\n"
                     "\tmov");
             stringAdd(&res, getPostfix(c->typs.items[c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].type.i].size));
-            addCptr(&res, "\t\t");
-            addCptr(&res, utos(c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].offset));
-            addCptr(&res, "(%rbx), %");
-            stringAddRange(&res, getRegister('a', c->typs.items[c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].type.i].size));
-            addCptr(&res, "\n"
+            catCptr(&res, "\t\t");
+            concat(&res, utos(c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].offset));
+            catCptr(&res, "(%rbx), %");
+            concat(&res, getRegister('a', c->typs.items[c->typs.items[as(popc, op)->par.val.r.i].flds.items[as(popc, op)->par2.val.r.i].type.i].size));
+            catCptr(&res, "\n"
                     "\tpushq\t\t%rax\n");
         }
     } else if (as(popc, op)->par.kind == KSTR) {
-        addCptr(&res, "\tleaq\t\t.str");
-        addCptr(&res, utos(as(popc, op)->par.val.r.i));
-        addCptr(&res, "(%rip), %rax\n"
+        catCptr(&res, "\tleaq\t\t.str");
+        concat(&res, utos(as(popc, op)->par.val.r.i));
+        catCptr(&res, "(%rip), %rax\n"
                 "\tpushq\t\t%rax\n");
     } else {
         if (as(popc, op)->par.val.i <= 2147483647 && as(popc, op)->par.val.i >= -2147483648) {
-            addCptr(&res, "\tpushq\t\t$");
-            addCptr(&res, itos(as(popc, op)->par.val.i));
+            catCptr(&res, "\tpushq\t\t$");
+            concat(&res, itos(as(popc, op)->par.val.i));
             stringAdd(&res, '\n');
         } else {
-            addCptr(&res, "\tmovq\t\t$");
-            addCptr(&res, utos(as(popc, op)->par.val.u));
-            addCptr(&res, ", %rax\n"
+            catCptr(&res, "\tmovq\t\t$");
+            concat(&res, utos(as(popc, op)->par.val.u));
+            catCptr(&res, ", %rax\n"
                     "\tpushq\t\t%rax\n");
         }
     }
     return res;
 }
 compile(LDAT) {
-    string res = stringDefault();
+    string res = {0};
     if (as(popc, op)->par.val.i < 0) {
-        addCptr(&res, "\tpopq\t\t%rbx\n"
+        catCptr(&res, "\tpopq\t\t%rbx\n"
                 "\tmovq\t\t(%rbx), %rax\n"
                 "\tshlq\t\t$");
-        addCptr(&res, utos((8 + as(popc, op)->par.val.i) * 8));
-        addCptr(&res, ", %rax\n"
+        concat(&res, utos((8 + as(popc, op)->par.val.i) * 8));
+        catCptr(&res, ", %rax\n"
                 "\tsarq\t\t$");
-        addCptr(&res, utos((8 + as(popc, op)->par.val.i) * 8));
-        addCptr(&res, ", %rax\n"
+        concat(&res, utos((8 + as(popc, op)->par.val.i) * 8));
+        catCptr(&res, ", %rax\n"
                 "\tpushq\t\t%rax\n");
     } else {
         if (as(popc, op)->par.val.i == 1 || as(popc, op)->par.val.i == 2)
-            addCptr(&res, "\txorl\t\t%eax, %eax\n");
-        addCptr(&res, "\tpopq\t\t%rbx\n"
+            catCptr(&res, "\txorl\t\t%eax, %eax\n");
+        catCptr(&res, "\tpopq\t\t%rbx\n"
                 "\tmov");
         stringAdd(&res, getPostfix(as(popc, op)->par.val.u));
-        addCptr(&res, "\t\t(%rbx), %");
-        stringAddRange(&res, getRegister('a', as(popc, op)->par.val.u));
-        addCptr(&res, "\n"
+        catCptr(&res, "\t\t(%rbx), %");
+        concat(&res, getRegister('a', as(popc, op)->par.val.u));
+        catCptr(&res, "\n"
                 "\tpushq\t\t%rax\n");
     }
     return res;
 }
 compile(STAT) {
-    string res = stringDefault();
-    addCptr(&res, "\tpopq\t\t%rbx\n"
+    string res = {0};
+    catCptr(&res, "\tpopq\t\t%rbx\n"
             "\tpopq\t\t%rax\n"
             "\tmov");
     stringAdd(&res, getPostfix(as(popc, op)->par.val.u));
-    addCptr(&res, "\t\t%");
-    stringAddRange(&res, getRegister('b', as(popc, op)->par.val.u));
-    addCptr(&res, ", (%rax)\n");
+    catCptr(&res, "\t\t%");
+    concat(&res, getRegister('b', as(popc, op)->par.val.u));
+    catCptr(&res, ", (%rax)\n");
     return res;
 }
 compile(IF) {
     u addr = c->addr;
-    string res = stringDefault();
+    string res = {0};
     for (u i = 0; i < as(bopc, op)->head.ops.len; i++)
-        stringAddRange(&res, compOP(c, as(bopc, op)->head.ops.items[i], f));
-    string tmp = stringDefault();
+        concat(&res, compOP(c, as(bopc, op)->head.ops.items[i], f));
+    string tmp = {0};
     for (u i = 0; i < as(bopc, op)->body.ops.len; i++)
-        stringAddRange(&tmp, compOP(c, as(bopc, op)->body.ops.items[i], f));
-    addCptr(&res, "\tpopq\t\t%rax\n"
+        concat(&tmp, compOP(c, as(bopc, op)->body.ops.items[i], f));
+    catCptr(&res, "\tpopq\t\t%rax\n"
             "\tcmpq\t\t$0, %rax\n"
             "\tje\t\t\t.else");
-    addCptr(&res, utos(addr));
+    concat(&res, utos(addr));
     stringAdd(&res, '\n');
-    stringAddRange(&res, tmp);
+    concat(&res, tmp);
     if (as(bopc, op)->els.ops.len > 0) {
         tmp.len = 0;
         for (u i = 0; i < as(bopc, op)->els.ops.len; i++)
-            stringAddRange(&tmp, compOP(c, as(bopc, op)->els.ops.items[i], f));
-        addCptr(&res, "\tjmp\t\t\t.endf");
-        addCptr(&res, utos(addr));
+            concat(&tmp, compOP(c, as(bopc, op)->els.ops.items[i], f));
+        catCptr(&res, "\tjmp\t\t\t.endf");
+        concat(&res, utos(addr));
         stringAdd(&res, '\n');
-        addCptr(&res, ".else");
-        addCptr(&res, utos(addr));
-        addCptr(&res, ":\n");
-        stringAddRange(&res, tmp);
-        addCptr(&res, ".endf");
-        addCptr(&res, utos(addr));
-        addCptr(&res, ":\n");
+        catCptr(&res, ".else");
+        concat(&res, utos(addr));
+        catCptr(&res, ":\n");
+        concat(&res, tmp);
+        catCptr(&res, ".endf");
+        concat(&res, utos(addr));
+        catCptr(&res, ":\n");
     } else {
-        addCptr(&res, ".else");
-        addCptr(&res, utos(addr));
-        addCptr(&res, ":\n");
+        catCptr(&res, ".else");
+        concat(&res, utos(addr));
+        catCptr(&res, ":\n");
     }
     return res;
 }
 compile(WHILE) {
-    string res = stringDefault();
+    string res = {0};
     u64 head = c->addr;
     for (u i = 0; i < as(bopc, op)->head.ops.len; i++)
-        stringAddRange(&res, compOP(c, as(bopc, op)->head.ops.items[i], f));
-    string tmp = stringDefault();
+        concat(&res, compOP(c, as(bopc, op)->head.ops.items[i], f));
+    string tmp = {0};
     for (u i = 0; i < as(bopc, op)->body.ops.len; i++)
-        stringAddRange(&tmp, compOP(c, as(bopc, op)->body.ops.items[i], f));
-    addCptr(&res, "\tpopq\t\t%rax\n"
+        concat(&tmp, compOP(c, as(bopc, op)->body.ops.items[i], f));
+    catCptr(&res, "\tpopq\t\t%rax\n"
             "\tcmpq\t\t$0, %rax\n"
             "\tje\t\t\t.endw");
-    addCptr(&res, utos(head));
+    concat(&res, utos(head));
     stringAdd(&res, '\n');
-    stringAddRange(&res, tmp);
-    addCptr(&res, "\tjmp\t\t\t.addr");
-    addCptr(&res, utos(head));
+    concat(&res, tmp);
+    catCptr(&res, "\tjmp\t\t\t.addr");
+    concat(&res, utos(head));
     stringAdd(&res, '\n');
-    addCptr(&res, ".endw");
-    addCptr(&res, utos(head));
-    addCptr(&res, ":\n");
+    catCptr(&res, ".endw");
+    concat(&res, utos(head));
+    catCptr(&res, ":\n");
     return res;
 }
 compile(TRY) {
-    string res = stringDefault();
-    addCptr(&res, "\tleaq\t\t.addr");
+    string res = {0};
+    catCptr(&res, "\tleaq\t\t.addr");
     u addr = c->addr++;
-    addCptr(&res, utos(addr));
-    addCptr(&res, "(%rip), %rax\n"
+    concat(&res, utos(addr));
+    catCptr(&res, "(%rip), %rax\n"
             "\tpushq\t\t%rax\n"
             "\tpushq\t\t%rbp\n"
             "\tmovq\t\t.excrsp(%rip), %rax\n"
             "\tpushq\t\t%rax\n"
             "\tmovq\t\t%rsp, .excrsp(%rip)\n");
     for (u i = 0; i < as(bopc, op)->body.ops.len; i++)
-        stringAddRange(&res, compOP(c, as(bopc, op)->body.ops.items[i], f));
-    addCptr(&res, "\tmovq\t\t.excrsp(%rip), %rax\n"
+        concat(&res, compOP(c, as(bopc, op)->body.ops.items[i], f));
+    catCptr(&res, "\tmovq\t\t.excrsp(%rip), %rax\n"
             "\tmovq\t\t(%rax), %rax\n"
             "\tmovq\t\t%rax, .excrsp(%rip)\n");
     if (as(bopc, op)->body.retc > 0) {
         for (u i = 1; i <= (u)as(bopc, op)->body.retc; i++) {
-            addCptr(&res, "\tmovq\t\t");
-            addCptr(&res, utos((as(bopc, op)->body.retc - i) * 8));
-            addCptr(&res, "(%rsp), %rax\n"
+            catCptr(&res, "\tmovq\t\t");
+            concat(&res, utos((as(bopc, op)->body.retc - i) * 8));
+            catCptr(&res, "(%rsp), %rax\n"
                     "\tmovq\t\t%rax, ");
-            addCptr(&res, utos((as(bopc, op)->body.retc - i + 3) * 8));
-            addCptr(&res, "(%rsp)\n");
+            concat(&res, utos((as(bopc, op)->body.retc - i + 3) * 8));
+            catCptr(&res, "(%rsp)\n");
         }
-        addCptr(&res, "\taddq\t\t$24, %rsp\n");
+        catCptr(&res, "\taddq\t\t$24, %rsp\n");
     }
     if (as(bopc, op)->els.ops.len > 0) {
-        string tmp = stringDefault();
+        string tmp = {0};
         for (u i = 0; i < as(bopc, op)->els.ops.len; i++)
-            stringAddRange(&tmp, compOP(c, as(bopc, op)->els.ops.items[i], f));
-        addCptr(&res, "\tjmp\t\t.endt");
-        addCptr(&res, utos(c->addr));
-        addCptr(&res, "\n"
+            concat(&tmp, compOP(c, as(bopc, op)->els.ops.items[i], f));
+        catCptr(&res, "\tjmp\t\t.endt");
+        concat(&res, utos(c->addr));
+        catCptr(&res, "\n"
                 ".addr");
-        addCptr(&res, utos(addr));
-        addCptr(&res, ":\n"
+        concat(&res, utos(addr));
+        catCptr(&res, ":\n"
                 "\tpushq\t\t%rax\n");
-        stringAddRange(&res, tmp);
-        addCptr(&res, ".endt");
-        addCptr(&res, utos(c->addr));
-        addCptr(&res, ":\n");
+        concat(&res, tmp);
+        catCptr(&res, ".endt");
+        concat(&res, utos(c->addr));
+        catCptr(&res, ":\n");
     }
     return res;
 }

@@ -7,7 +7,6 @@ listDefine(ref);
 listDefine(funDef);
 listDefine(typDef);
 listDefine(dgn);
-listDefineEquals(string);
 
 const attDef ATTRIBUTES[ATTCOUNT] = {
     { "signed",

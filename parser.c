@@ -1,4 +1,5 @@
 #include "h/parser.h"
+#include "mcx/file.h"
 #include "h/preprocessor.h"
 #include "h/linker.h"
 #include "h/opcodes.h"
@@ -41,9 +42,9 @@ void init(PARSER) {
     opSymbols = charAggregateFromArray("~!@%^&*()-_=+\\|:;,<.>/?`#", 27);
     modifiers = charAggregateFromArray("-`#", 3);
     token = charSetSubstract(notWhitespace, charAggregateFromArray("{}", 2));
-    stringListAdd(&consts, statstr("$stdin"));
-    stringListAdd(&consts, statstr("$stdout"));
-    stringListAdd(&consts, statstr("$stderr"));
+    stringListAdd(&consts, sstr("$stdin"));
+    stringListAdd(&consts, sstr("$stdout"));
+    stringListAdd(&consts, sstr("$stderr"));
 }
 
 static bool next(context* c) {
@@ -121,7 +122,7 @@ static bool parseHex(context* c, u64* res, u8 digits) {
                 return false;
             }
     if (res)
-        *res = strtoul(cptrify(stringGetRange(c->text, o.cr, c->loc.cr - o.cr)), NULL, 16);
+        *res = strtoul(cptr(stringGetRange(c->text, o.cr, c->loc.cr - o.cr)), NULL, 16);
     return true;
 }
 static bool parseES(context* c, char* res) {
@@ -135,11 +136,11 @@ static bool parseES(context* c, char* res) {
     } else if (parseC(c, 'x') || parseC(c, 'X')) {
         u64 h = 0;
         if (!parseHex(c, &h, 2))
-            addDgn(c, EUNRECESCSEQ, cptrify(codeFrom(c, o)));
+            addDgn(c, EUNRECESCSEQ, cptr(codeFrom(c, o)));
         if (res)
             *res = *(u8*)h;
     } else
-        addDgn(c, EUNRECESCSEQ, cptrify(codeFrom(c, o)));
+        addDgn(c, EUNRECESCSEQ, cptr(codeFrom(c, o)));
     return true;
 }
 static inline bool parseCC(context* c, char* res, bool str) {
@@ -156,7 +157,7 @@ static bool parseIL(context* c, i64* res) {
         return false;
     }
     if (res)
-        *res = strtol(cptrify(stringGetRange(c->text, o.cr, c->loc.cr - o.cr)), NULL, 10);
+        *res = strtol(cptr(stringGetRange(c->text, o.cr, c->loc.cr - o.cr)), NULL, 10);
     return true;
 }
 static bool parseUL(context* c, u64* res) {
@@ -169,7 +170,7 @@ static bool parseUL(context* c, u64* res) {
             o = c->loc;
             if (parseAllCS(c, octDigits)) {
                 if (res)
-                    *res = strtoul(cptrify(codeFrom(c, o)), NULL, 8);
+                    *res = strtoul(cptr(codeFrom(c, o)), NULL, 8);
             } else {
                 if (res)
                     *res = 0;
@@ -177,7 +178,7 @@ static bool parseUL(context* c, u64* res) {
         }
     } else if (parseAllCS(c, digits)) {
         if (res)
-            *res = strtoul(cptrify(codeFrom(c, o)), NULL, 10);
+            *res = strtoul(cptr(codeFrom(c, o)), NULL, 10);
     } else if (parseCL(c, (char*)res));
     else if (parseC(c, '$') && parseAllCS(c, letters)) {
         u i = stringListPos(consts, codeFrom(c, o));
@@ -200,7 +201,7 @@ static bool parseDL(context* c, d* res) {
         return false;
     }
     if (res)
-        *res = strtod(cptrify(stringGetRange(c->text, o.cr, c->loc.cr - o.cr)), NULL);
+        *res = strtod(cptr(stringGetRange(c->text, o.cr, c->loc.cr - o.cr)), NULL);
     return true;
 }
 static bool parseSL(context* c, ref* res) {
@@ -442,7 +443,7 @@ static bool parseAtt(context* c, att* res) {
         return false;
     res->kind = getAtt(codeFrom(c, res->loc));
     if (res->kind == ATTCOUNT)
-        addDgnLoc(c, EUNRECATT, res->loc, cptrify(codeFrom(c, res->loc)));
+        addDgnLoc(c, EUNRECATT, res->loc, cptr(codeFrom(c, res->loc)));
     parseAllCS(c, whitespace);
     if (!parseC(c, '(')) {
         if (ATTRIBUTES[res->kind].arg != FNONE)
@@ -509,7 +510,7 @@ static bool parseVarList(context* c, list(varDef)* res) {
     while (parseVarDef(c, &v)) {
         u r = getVar(res, v.name.sign, false);
         if ((res->items[r].flags & FDEFINED))
-            addDgn(c, ESECONDDECLARATION, cptrify(v.name.sign));
+            addDgn(c, ESECONDDECLARATION, cptr(v.name.sign));
         res->items[r] = v;
         if (!commaflag)
             addDgnLoc(c, EMISSINGTOKEN, v.name.loc, ",");
@@ -531,7 +532,7 @@ static bool parseToken(context* c) {
     loc o = c->loc;
     bool res = parseAllCS(c, token);
     if (res)
-        addDgnLoc(c, EUNRECTOKEN, o, cptrify(codeFrom(c, o)));
+        addDgnLoc(c, EUNRECTOKEN, o, cptr(codeFrom(c, o)));
     return res;
 }
 static bool parseIf(context* c, bopc** res, u r) {
@@ -710,7 +711,7 @@ static bool parseGlbDef(context* c) {
     else {
         u r = getGlb(c, v.name.sign, false);
         if (c->glbs.items[r].flags & FDEFINED)
-            addDgnLoc(c, ESECONDDECLARATION, v.name.loc, cptrify(v.name.sign));
+            addDgnLoc(c, ESECONDDECLARATION, v.name.loc, cptr(v.name.sign));
         c->glbs.items[r] = v;
         if (!parseC(c, ';'))
             addDgn(c, EMISSINGTOKEN, ";");
@@ -725,7 +726,7 @@ static bool parseTypDef(context* c) {
         addDgn(c, EMISSINGSYNTAX, "type identifier");
     u r = getTyp(c, n.sign, false);
     if (c->typs.items[r].flags & FDEFINED)
-        addDgnLoc(c, ESECONDDECLARATION, n.loc, cptrify(n.sign));
+        addDgnLoc(c, ESECONDDECLARATION, n.loc, cptr(n.sign));
     else
         c->typs.items[r].name = n;
     parseAllCS(c, whitespace);
@@ -786,11 +787,11 @@ static bool parseFunDef(context* c) {
             stringAdd(&n.sign, ',');
         stringAddRange(&n.sign, c->typs.items[vars.items[i].type.i].name.sign);
     }
-    addCptr(&n.sign, ")::");
+    catCptr(&n.sign, ")::");
     stringAddRange(&n.sign, typlist);
     u r = getFun(c, n.sign, false);
     if (c->funs.items[r].flags & FDEFINED)
-        addDgnLoc(c, ESECONDDECLARATION, n.loc, cptrify(n.sign));
+        addDgnLoc(c, ESECONDDECLARATION, n.loc, cptr(n.sign));
     else {
         c->funs.items[r].name = n;
         c->funs.items[r].args = vars;
@@ -844,7 +845,7 @@ static void parseFile(context* c, u f) {
         if (!(parseFunDef(c) || parseTypDef(c) || parseGlbDef(c))) {
             loc o = c->loc;
             parseAllNot(c, whitespace);
-            addDgnLoc(c, EUNRECTOKEN, o, cptrify(codeFrom(c, o)));
+            addDgnLoc(c, EUNRECTOKEN, o, cptr(codeFrom(c, o)));
         }
         parseAllCS(c, whitespace);
     }

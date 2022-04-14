@@ -1,6 +1,8 @@
 #ifndef OBJECTS_H
 #define OBJECTS_H
-#include "../MCX/mcx.h"
+#include "../mcx/mcx.h"
+#include "../mcx/list.h"
+#include "../mcx/string.h"
 
 typedef enum {
     LVLMESSAGE,
@@ -267,7 +269,6 @@ typedef struct dgnDscr_s {
     char* msg;
     LVL lvl;
 } dgnDscr;//diagnostic descriptor
-typedef char* charPtr;
 typedef struct dgn_s {
     DGNKIND kind;
     loc     loc;
@@ -277,7 +278,6 @@ typedef struct dgn_s {
 listDeclare(typDef);
 listDeclare(funDef);
 listDeclare(dgn);
-listDeclareEquals(string);
 typedef struct context_s {
     string       bin;
     string       text;
