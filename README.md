@@ -24,7 +24,7 @@ $ make
 ## Usage
 
 ``` console
-$ gstonk <source1> [source2] [source...] [-o<output>]
+$ gstonk <source1> [source2] [source...] [-o <output>]
 ```
 
 To learn the basics on how to code in GStonk, check out the [GStonk Wiki](https://github.com/coddra/GStonk/wiki)
