@@ -296,7 +296,6 @@ typedef struct context_s {
     FLAGS        flags;
 } context;//i don't think i have to explain this
 
-
 extern const attDef ATTRIBUTES[ATTCOUNT];
 
 #endif//OBJECTS_H

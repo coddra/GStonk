@@ -21,9 +21,9 @@ char* FLYCHECKFLAG = "--flycheck";
 void parseArgs(context* c, list(string) args) {
     for (u i = 0; i < args.len; i++)
         if (args.items[i].len > 0 && args.items[i].items[0] == '-') {
-            if (stringEquals(args.items[i], sstr(GDBFLAG)))
+            if (stringCompare(args.items[i], sstr(GDBFLAG)) == 0)
                 c->flags |= FGDB;
-            else if (stringEquals(args.items[i], sstr(FLYCHECKFLAG)))
+            else if (stringCompare(args.items[i], sstr(FLYCHECKFLAG)) == 0)
                 c->flags |= FFLYCHECK;
             else {
                 u o = 0;
