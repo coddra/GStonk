@@ -1,7 +1,9 @@
 CC:=gcc
 CFLAGS:=-O3
 
-OBJS:=$(patsubst %.c,%.o,$(wildcard *.c)) $(patsubst %.c,%.o,$(wildcard mcx/c/*.c))
+OBJS:=$(patsubst %.c,%.o,$(wildcard *.c))
+OBJS+= $(patsubst %.c,%.o,$(wildcard mcx/c/*.c))
+OBJS+= $(patsubst %.c,%.o,$(wildcard ccom/c/*.c))
 DFILES:=$(patsubst %.o,%.d,$(OBJS))
 
 XMPLS:=$(patsubst examples/%.gst,%,$(wildcard examples/*.gst))

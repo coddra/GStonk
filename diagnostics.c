@@ -1,208 +1,81 @@
 #include "h/diagnostics.h"
 #include "h/linker.h"
 
-const dgnDscr DGNS[DGNCOUNT] = {
-    { "",
-        "missing token '$'",
-        LVLERROR,
-    },
-    { "",
-        "missing $",
-        LVLERROR,
-    },
-    { "",
-        "unrecognized escapesequence '$'",
-        LVLERROR,
-    },
-    { "",
-        "second declaration of '$' found",
-        LVLERROR,
-    },
-    { "",
-        "$ out of range",
-        LVLERROR,
-    },
-    { "",
-        "unrecognized token '$'",
-        LVLERROR,
-    },
-    { "",
-        "definition of '$' not found",
-        LVLERROR,
-    },
-    { "",
-        "wrong number of parameters provided for '$'",
-        LVLERROR,
-    },
-    { "",
-        "wrong number of arguments defined for '$'",
-        LVLERROR,
-    },
-    { "",
-        "multiple functions found with attribute 'main'",
-        LVLERROR,
-    },
-    { "",
-        "no input specified",
-        LVLERROR,
-    },
-    { "",
-        "size of type must be one of the following: 0, 1, 2, 4 or 8",
-        LVLERROR,
-    },
-    { "",
-        "not enough arguments",
-        LVLERROR,
-    },
-    { "",
-        "there is no attribue with name '$'",
-        LVLERROR,
-    },
-    { "",
-        "this attribute can only be attached once",
-        LVLERROR,
-    },
-    { "",
-        "stack unpredictable",
-        LVLERROR,
-    },
-    { "",
-        "file '$' does not exist",
-        LVLERROR,
-    },
-    { "",
-        "opcode '$' does not take any argument",
-        LVLERROR,
-    },
-    { "",
-        "wrong kind of parameter provided for '$'",
-        LVLERROR,
-    },
-    { "",
-        "gcc returned exit status '$'",
-        LVLERROR,
-    },
-    { "",
-        "attribute '$' cannot be attached to this kind of object",
-        LVLERROR,
-    },
-    { "",
-        "not all codepaths return the controlflow",
-        LVLERROR,
-    },
-    { "",
-        "path '$' is illegal",
-        LVLERROR,
-    },
+cDgnDscr ESECONDDECLARATION = { "secondDeclaration", "second declaration of '$' found", LVLERROR };
+cDgnDscr EARGOUTOFRANGE = { "argOutOfRange", "$ out of range", LVLERROR };
+cDgnDscr EUNRECTOKEN = { "unrecToken", "unrecognized token '$'", LVLERROR };
+cDgnDscr EDEFNOTFOUND = { "defNotFound", "definition of '$' not found", LVLERROR };
+cDgnDscr EWRONGNUMOFPARAMS = { "wrongNumOfParams", "wrong number of parameters provided for '$'", LVLERROR };
+cDgnDscr EWRONGNUMOFARGS = { "wrongNumOfArgs", "wrong number of arguments defined for '$'", LVLERROR };
+cDgnDscr EMULTIMAIN = { "multiMain", "multiple functions found with attribute 'main'", LVLERROR };
+cDgnDscr ENOINPUT = { "noInput", "no input specified", LVLERROR };
+cDgnDscr EWRONGSIZE = { "wrongSize", "size of type must be one of the following: 0, 1, 2, 4 or 8", LVLERROR };
+cDgnDscr ESTACKLOW = { "stackLow", "not enough parameters", LVLERROR };
+cDgnDscr EUNRECATT = { "unrecAtt", "there is no attribue with name '$'", LVLERROR };
+cDgnDscr ESINGLEATT = { "singleAtt", "this attribute can only be attached once", LVLERROR };
+cDgnDscr ESTACKUNPRED = { "stackUnpred", "stack unpredictable", LVLERROR };
+cDgnDscr EFILENOTEXIST = { "fileNotExist", "file '$' does not exist", LVLERROR };
+cDgnDscr ENOPAR = { "noPar", "opcode '$' does not take any arguments", LVLERROR };
+cDgnDscr EWRONGPAR = { "wrongPar", "wrong kind of parameter provided for '$'", LVLERROR };
+cDgnDscr EGCCFAILED = { "gccFailed", "gcc returned exit status '$'", LVLERROR };
+cDgnDscr EWRONGTARGET = { "wrongTarget", "attribute '$' cannot be attached to this kind of object", LVLERROR };
+cDgnDscr ENOTSTOPS = { "notStops", "not all codepaths return the controlflow", LVLERROR };
+cDgnDscr EPATHILLEGAL = { "pathIllegal", "path '$' is illegal", LVLERROR };
 
-    { "wnosize",
-        "no size attribute is specified for this type",
-        LVLWARNING,
-    },
-    { "wstackh",
-        "$ value(s) stay on the stack",
-        LVLWARNING,
-    },
-    { "wunreco",
-        "unreachable code detected",
-        LVLWARNING,
-    },
-    { "wmultio",
-        "output already specified",
-        LVLWARNING,
-    },
+cDgnDscr WNOSIZE = { "noSize", "no size attribute is specified for this type", LVLWARNING };
+cDgnDscr WSTACKHIGH = { "stackHigh", "$ value(s) stay on the stack", LVLWARNING };
+cDgnDscr WUNREACHCODE = { "unreachableCode", "unreachable code detected", LVLWARNING };
+cDgnDscr WMULTIOUTPUT = { "multiOut", "output already specified", LVLWARNING };
 
-    { "mtokomi",
-        "'$' is omittable",
-        LVLMESSAGE,
-    },
-    { "mmultif",
-        "'$' is included multiple times",
-        LVLMESSAGE,
-    },
-    { "mnotref",
-        "'$' is defined, but never referenced",
-        LVLMESSAGE,
-    },
-    { "msccess",
-        "executable successfully generated",
-        LVLMESSAGE,
-    },
-    { "munrecf",
-        "flag '$' is not recognized",
-        LVLMESSAGE,
-    },
+cDgnDscr MTOKENOMITTABLE = { "tokenOmit", "'$' is omittable", LVLMESSAGE };
+cDgnDscr MMULTIFILE = { "multiFile", "'$' is included multiple times", LVLMESSAGE };
+cDgnDscr MNOTREFERENCED = { "notReferenced", "'$' is defined, but never referenced", LVLMESSAGE };
+cDgnDscr MSUCCESS = { "success", "executable successfully generated", LVLMESSAGE };
+cDgnDscr MUNRECFLAG = { "unrecFlag", "flag '$' is not recognized", LVLMESSAGE };
+
+dgnDscrPtr DGNS[DGNCOUNT] = {
+    &EMISSINGTOKEN,
+    &EMISSINGSYNTAX,
+    &EUNRECESCSEQ,
+    &ESECONDDECLARATION,
+    &EARGOUTOFRANGE,
+    &EUNRECTOKEN,
+    &EDEFNOTFOUND,
+    &EWRONGNUMOFPARAMS,
+    &EWRONGNUMOFARGS,
+    &EMULTIMAIN,
+    &ENOINPUT,
+    &EWRONGSIZE,
+    &ESTACKLOW,
+    &EUNRECATT,
+    &ESINGLEATT,
+    &ESTACKUNPRED,
+    &EFILENOTEXIST,
+    &ENOPAR,
+    &EWRONGPAR,
+    &EGCCFAILED,
+    &EWRONGTARGET,
+    &ENOTSTOPS,
+    &EPATHILLEGAL,
+
+    &WNOSIZE,
+    &WSTACKHIGH,
+    &WUNREACHCODE,
+    &WMULTIOUTPUT,
+
+    &MTOKENOMITTABLE,
+    &MMULTIFILE,
+    &MNOTREFERENCED,
+    &MSUCCESS,
+    &MUNRECFLAG,
 };
 
-void addDgnLoc(context* c, DGNKIND kind, loc loc, char* prm) {
-    dgn d = { kind, loc, prm };
-    dgnListAdd(&c->dgns, d);
-}
-void addDgnEmpty(context* c, DGNKIND kind) {
-    addDgnLoc(c, kind, c->loc, NULL);
-}
-void addDgnEmptyLoc(context* c, DGNKIND kind, loc loc) {
-    addDgnLoc(c, kind, loc, NULL);
-}
-void addDgn(context* c, DGNKIND kind, char* prm) {
-    addDgnLoc(c, kind, c->loc, prm);
-}
-string dgnToString(context* c, u d) {
-    string res = {0};
-    if (c->flags & FSO) {
-        if (c->dgns.items[d].loc.file < c->inputs.len) {
-            stringAddRange(&res, c->inputs.items[c->dgns.items[d].loc.file]);
-            stringAdd(&res, ':');
-            concat(&res, utos(c->dgns.items[d].loc.ln));
-            stringAdd(&res, ':');
-            concat(&res, utos(c->dgns.items[d].loc.cl + 1));
-            catCptr(&res, ": ");
-        }
-        catCptr(&res, DGNS[c->dgns.items[d].kind].lvl == LVLERROR ? "error:" : DGNS[c->dgns.items[d].kind].lvl == LVLWARNING ? "warning:" : "message:");
-        catCptr(&res, DGNS[c->dgns.items[d].kind].msg);
-        if (c->dgns.items[d].prm != NULL)
-            stringReplaceAll(&res, sstr("$"), sstr(c->dgns.items[d].prm));
-    } else {
-        res = str(DGNS[c->dgns.items[d].kind].lvl == LVLERROR ? "error: " : DGNS[c->dgns.items[d].kind].lvl == LVLWARNING ? "warning: " : "message: ");
-        catCptr(&res, DGNS[c->dgns.items[d].kind].msg);
-        if (c->dgns.items[d].prm != NULL)
-            stringReplaceAll(&res, sstr("$"), sstr(c->dgns.items[d].prm));
-        catCptr(&res, "\n");
-        if (c->dgns.items[d].loc.file < c->inputs.len) {
-            catCptr(&res, "\tin file '");
-            stringAddRange(&res, c->inputs.items[c->dgns.items[d].loc.file]);
-            catCptr(&res, "', at line: ");
-            concat(&res, utos(c->dgns.items[d].loc.ln));
-            catCptr(&res, ", column: ");
-            concat(&res, utos(c->dgns.items[d].loc.cl));
-        }
-        if ((DGNS[c->dgns.items[d].kind].lvl & (LVLWARNING | LVLMESSAGE)) != 0) {
-            catCptr(&res, " (-");
-            catCptr(&res, DGNS[c->dgns.items[d].kind].id);
-            catCptr(&res, ")");
-        }
-    }
-    return res;
-}
-static bool includeDgn(context* c, u d, u h) {
-    return ((c->flags & FFLYCHECK) == FFLYCHECK && c->dgns.items[d].loc.file == 0) ||
-            ((c->flags & FFLYCHECK) != FFLYCHECK &&
-             ((DGNS[c->dgns.items[d].kind].lvl == h || h > LVLERROR) &&
-              !((c->flags & FIGNOREMSGS) != 0 && DGNS[c->dgns.items[d].kind].lvl == LVLMESSAGE ||
-                (c->flags & FIGNOREWRNGS) != 0 && DGNS[c->dgns.items[d].kind].lvl == LVLWARNING ||
-                uListContains(c->ignoreDgns, c->dgns.items[d].kind)) &&
-              (h >= LVLERROR || c->dgns.items[d].loc.file >= c->inputs.len || !isStd(c, c->inputs.items[c->dgns.items[d].loc.file]))));
-}
-LVL highestLVL(context* c) {
-    LVL res = LVLMESSAGE;
-    for (u i = 0; i < c->dgns.len && res != LVLERROR; i++)
-        if (DGNS[c->dgns.items[i].kind].lvl > res && includeDgn(c, i, LVLERROR + 1))
-            res = DGNS[c->dgns.items[i].kind].lvl;
-    return res;
-}
-void printDgns(context* c) {
-    LVL h = highestLVL(c);
-    for (u i = 0; i < c->dgns.len; i++)
-        if (includeDgn(c, i, h))
-            puts(cptr(dgnToString(c, i)));
+bool includeDgn(cContext* c, cDgn d, u h) {
+    return ((((context*)c)->flags & FFLYCHECK) == FFLYCHECK && d.loc.file == 0) ||
+            ((((context*)c)->flags & FFLYCHECK) != FFLYCHECK &&
+             ((d.kind->lvl == h || h > LVLERROR) &&
+              !((((context*)c)->flags & FIGNOREMSGS) != 0 && d.kind->lvl == LVLMESSAGE ||
+                (((context*)c)->flags & FIGNOREWRNGS) != 0 && d.kind->lvl == LVLWARNING ||
+                dgnDscrPtrListContains(((context*)c)->ignoreDgns, d.kind)) &&
+              (h >= LVLERROR || d.loc.file >= ((context*)c)->inputs.len || !isStd(((context*)c), ((context*)c)->inputs.items[d.loc.file]))));
 }

@@ -6,7 +6,7 @@ listDefine(varDef);
 listDefine(ref);
 listDefine(funDef);
 listDefine(typDef);
-listDefine(dgn);
+listDefineDefault(dgnDscrPtr);
 
 const attDef ATTRIBUTES[ATTCOUNT] = {
     { "signed",

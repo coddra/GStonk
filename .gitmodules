@@ -1,3 +1,6 @@
 [submodule "mcx"]
 	path = mcx
 	url = https://github.com/coddra/mcx
+[submodule "ccom"]
+	path = ccom
+	url = https://github.com/coddra/ccom

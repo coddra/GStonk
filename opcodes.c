@@ -13,11 +13,11 @@ link(LDAT) {
         as(popc, o)->par.val.i = 8;
     if (as(popc, o)->par.val.i != -4 && as(popc, o)->par.val.i != -2 && as(popc, o)->par.val.i != -1 &&
         as(popc, o)->par.val.i != 1 && as(popc, o)->par.val.i != 2 && as(popc, o)->par.val.i != 4 && as(popc, o)->par.val.i != 8)
-        addDgnEmpty(c, EARGOUTOFRANGE);
+        cAddDgnEmpty(c, &EARGOUTOFRANGE);
 }
 link(STAT) {
     if (as(popc, o)->par.val.u != 1 && as(popc, o)->par.val.u != 2 && as(popc, o)->par.val.i != 4 && as(popc, o)->par.val.i != 8)
-        addDgnEmpty(c, EARGOUTOFRANGE);
+        cAddDgnEmpty(c, &EARGOUTOFRANGE);
 }
 link(RET) {
     as(popc, o)->argc = c->funs.items[f].ret.len;
@@ -26,7 +26,7 @@ link(RET) {
 link(IF) {
     linkBody(c, &as(bopc, o)->head, f, s);
     if (s == 0)
-        addDgnEmptyLoc(c, ESTACKLOW, o->loc);
+        cAddDgnEmptyLoc(c, &ESTACKLOW, o->loc);
     else
         (*s)--;
     i64 e = *s;
@@ -34,20 +34,20 @@ link(IF) {
     if (as(bopc, o)->els.ops.len != 0)
         linkBody(c, &as(bopc, o)->els, f, &e);
     if (e != *s)
-        addDgnEmptyLoc(c, ESTACKUNPRED, o->loc);
+        cAddDgnEmptyLoc(c, &ESTACKUNPRED, o->loc);
 }
 link(WHILE) {
     i64 h = *s;
     linkBody(c, &as(bopc, o)->head, f, s);
     h = *s - h;
     if (s == 0)
-        addDgnEmptyLoc(c, ESTACKLOW, o->loc);
+        cAddDgnEmptyLoc(c, &ESTACKLOW, o->loc);
     else
         (*s)--;
     i64 tmp = *s;
     linkBody(c, &as(bopc, o)->body, f, s);
     if (h + *s - tmp != 1)
-        addDgnEmptyLoc(c, ESTACKUNPRED, o->loc);
+        cAddDgnEmptyLoc(c, &ESTACKUNPRED, o->loc);
     *s = tmp;
 }
 link(TRY) {
@@ -60,7 +60,7 @@ link(TRY) {
         s2 = 0;
     as(bopc, o)->body.retc = s1;
     if (s1 != s2)
-        addDgnEmptyLoc(c, ESTACKUNPRED, o->loc);
+        cAddDgnEmptyLoc(c, &ESTACKUNPRED, o->loc);
     if (s2 < s1)
         s1 = s2;
     s = s + s1;

@@ -1,11 +1,7 @@
 #include "h/preprocessor.h"
 
 void preprocess(context* c) {
-    stringReplaceAll(&c->text, sstr("\r\n"), sstr("\n"));
-    stringReplaceAll(&c->text, sstr("\r"), sstr("\n"));
-    for (char i = '\0'; i < ' '; i++)
-        if (i != '\n' && i != '\t')
-            stringRemoveAll(&c->text, i);
+    normalize(c);
     u cs = c->text.len;
     for (u i = 0; i < c->text.len - 1; i++) {
         if (cs >= c->text.len && c->text.items[i] == ';' && c->text.items[i + 1] == ';')

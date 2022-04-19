@@ -31,20 +31,20 @@ void parseArgs(context* c, list(string) args) {
                     if (args.items[i].items[j] == OUTPUTFLAG) {
                         o++;
                         if (i + o >= args.len)
-                            addDgn(c, EMISSINGSYNTAX, "filename");
+                            cAddDgn(c, &EMISSINGSYNTAX, "filename");
                         else if (c->output.len != 0)
-                            addDgnEmpty(c, WMULTIOUTPUT);
+                            cAddDgnEmpty(c, &WMULTIOUTPUT);
                         else {
                             c->output = args.items[i + o];
                             if (!isPathLegal(c->output))
-                                addDgn(c, EPATHILLEGAL, cptr(c->output));
+                                cAddDgn(c, &EPATHILLEGAL, cptr(c->output));
                         }
                     } else if (args.items[i].items[j] == DGNFLAG) {
                         o++;
                         if (i + o >= args.len)
-                            addDgn(c, EMISSINGSYNTAX, "diagnostic id");
+                            cAddDgn(c, &EMISSINGSYNTAX, "diagnostic id");
                         else
-                            uListAdd(&c->ignoreDgns, getDgn(args.items[i + o]));
+                            dgnDscrPtrListAdd(&c->ignoreDgns, getDgn(args.items[i + o]));
                     } else if (args.items[i].items[j] == MALLFLAG)
                         c->flags |= FIGNOREMSGS;
                     else if (args.items[i].items[j] == WALLFLAG)
@@ -56,7 +56,7 @@ void parseArgs(context* c, list(string) args) {
                     else if (args.items[i].items[j] == SOFLAG)
                         c->flags |= FSO;
                     else
-                        addDgn(c, MUNRECFLAG, ctcptr(args.items[i].items[j]));
+                        cAddDgn(c, &MUNRECFLAG, ctcptr(args.items[i].items[j]));
                 }
                 i += o;
             }
@@ -64,10 +64,10 @@ void parseArgs(context* c, list(string) args) {
             if (fileExists(args.items[i]))
                 stringListAdd(&c->inputs, args.items[i]);
             else
-                addDgn(c, EFILENOTEXIST, cptr(args.items[i]));
+                cAddDgn(c, &EFILENOTEXIST, cptr(args.items[i]));
         }
     if (c->inputs.len == 0)
-        addDgnEmpty(c, ENOINPUT);
+        cAddDgnEmpty(c, &ENOINPUT);
     else if (c->output.len == 0) {
         c->output = stringClone(c->inputs.items[0]);
         u pos = stringLastPos(c->output, '.');
@@ -76,8 +76,8 @@ void parseArgs(context* c, list(string) args) {
 }
 
 void exitOnError(context* c) {
-    if (highestLVL(c) == LVLERROR) {
-        printDgns(c);
+    if (cHighestLVL(c) == LVLERROR) {
+        cPrintDgns(c, c->flags & FSO);
         exit(1);
     }
 }
@@ -107,7 +107,7 @@ string getBin(char* argz) {
 }
 
 int main(int argc, char** argv) {
-    init(FILE);
+    init(MCX);
     init(PARSER);
 
     context c = {0};
@@ -127,7 +127,7 @@ int main(int argc, char** argv) {
     exitOnError(&c);
 
     if ((c.flags & FFLYCHECK) == FFLYCHECK) {
-        printDgns(&c);
+        cPrintDgns(&c, true);
         exit(0);
     }
 
@@ -150,10 +150,10 @@ int main(int argc, char** argv) {
         catCptr(&cmd, " -O3");
     int res = system(cptr(cmd));
     if (res)
-        addDgn(&c, EGCCFAILED, cptr(utos(res)));
+        cAddDgn(&c, &EGCCFAILED, cptr(utos(res)));
     else
-        addDgnEmpty(&c, MSUCCESS);
+        cAddDgnEmpty(&c, &MSUCCESS);
     if ((c.flags & FASM) == 0)
         remove(cptr(out));
-    printDgns(&c);
+    cPrintDgns(&c, c.flags & FSO);
 }

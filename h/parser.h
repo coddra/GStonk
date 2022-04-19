@@ -1,7 +1,7 @@
 #ifndef PARSER_H
 #define PARSER_H
-
 #include "objects.h"
+#include "../ccom/parser.h"
 
 void init(PARSER);
 bool parseBody(context* c, body* res, u r);

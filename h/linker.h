@@ -1,6 +1,7 @@
 #ifndef LINKER_H
 #define LINKER_H
 #include "objects.h"
+#include "../ccom/linker.h"
 #include <string.h>
 
 string getCsign(string sign);
@@ -14,14 +15,13 @@ bool export(context* c, def* d);
 u getFun(context* c, string sign, bool r);
 u getTyp(context* c, string sign, bool r);
 u getGlb(context* c, string sign, bool r);
+dgnDscrPtr getDgn(string sign);
 ATTKIND getAtt(string sign);
-DGNKIND getDgn(string sign);
 u getVar(list(varDef)* l, string sign, bool r);
 
 AFLAG kindToFlag(AKIND k);
 bool isGOP(context* c, string code, par* pars, OP* op);
 
-string codeFrom(context* c, loc o);
 bool addFile(context* c, string path, loc loc);
 bool isStd(context* c, string path);
 

@@ -3,12 +3,8 @@
 #include "../mcx/mcx.h"
 #include "../mcx/list.h"
 #include "../mcx/string.h"
+#include "../ccom/objects.h"
 
-typedef enum {
-    LVLMESSAGE,
-    LVLWARNING,
-    LVLERROR,
-} LVL;//level
 typedef enum {
     KNONE,
     KFUN,
@@ -112,51 +108,8 @@ typedef enum {
     ATTEXPORT,
     ATTCOUNT,
 } ATTKIND;
-typedef enum {
-    EMISSINGTOKEN,
-    EMISSINGSYNTAX,
-    EUNRECESCSEQ,
-    ESECONDDECLARATION,
-    EARGOUTOFRANGE,
-    EUNRECTOKEN,
-    EDEFNOTFOUND,
-    EWRONGNUMOFPARAMS,
-    EWRONGNUMOFARGS,
-    EMULTIMAIN,
-    ENOINPUT,
-    EWRONGSIZE,
-    ESTACKLOW,
-    EUNRECATT,
-    ESINGLEATT,
-    ESTACKUNPRED,
-    EFILENOTEXIST,
-    ENOPAR,
-    EWRONGPAR,
-    EGCCFAILED,
-    EWRONGTARGET,
-    ENOTSTOPS,
-    EPATHILLEGAL,
 
-    WNOSIZE,
-    WSTACKHIGH,
-    WUNREACHCODE,
-    WMULTIOUTPUT,
-
-    MTOKENOMITTABLE,
-    MMULTIFILE,
-    MNOTREFERENCED,
-    MSUCCESS,
-    MUNRECFLAG,
-
-    DGNCOUNT,
-} DGNKIND;
-
-typedef struct loc_s {
-    u cr;
-    u ln;
-    u cl;
-    u file;
-} loc;//location
+typedef cLoc loc;
 
 typedef struct ref_s {
     u i;
@@ -175,7 +128,7 @@ typedef struct par_s {
 } par;//compiletime parameter of operation or attribute
 
 typedef struct att_s {
-    loc       loc;
+    loc      loc;
     ATTKIND   kind;
     par       par;
     FLAGS     flags;
@@ -191,7 +144,7 @@ typedef opc* opcPtr;
 listDeclare(opcPtr);
 listDeclareVaList(opcPtr);
 typedef struct body_s {
-    loc          loc;
+    loc         loc;
     string       text;
     list(opcPtr) ops;
     FLAGS        flags;
@@ -234,7 +187,7 @@ listDeclare(ref);
 typedef struct name_s {
     string sign;
     string csign;
-    loc    loc;
+    loc   loc;
 } name;
 listDeclare(att);
 #define defDerive                               \
@@ -264,34 +217,21 @@ typedef struct typDef_s {
     list(varDef) flds;
 } typDef;//type definition
 
-typedef struct dgnDscr_s {
-    char* id;
-    char* msg;
-    LVL lvl;
-} dgnDscr;//diagnostic descriptor
-typedef struct dgn_s {
-    DGNKIND kind;
-    loc     loc;
-    char*   prm;
-} dgn;//diagnostic
-
 listDeclare(typDef);
 listDeclare(funDef);
-listDeclare(dgn);
+typedef cDgnDscr* dgnDscrPtr;
+listDeclareDefault(dgnDscrPtr);
 typedef struct context_s {
+    CCONTEXTFIELDS;
     string       bin;
-    string       text;
-    loc          loc;
     u64          addr;
     list(funDef) funs;
     list(typDef) typs;
     list(varDef) glbs;
     list(string) strs;
-    list(dgn)    dgns;
-    list(u)      ignoreDgns;
+    list(dgnDscrPtr) ignoreDgns;
     list(att)    atts;
     u            main;
-    list(string) inputs;
     string       output;
     FLAGS        flags;
 } context;//i don't think i have to explain this
