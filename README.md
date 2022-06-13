@@ -6,8 +6,7 @@ If you are looking for a similar language but a bit more readable, check out [Ts
 
 ## Disclaimer
 
-**IMPORTANT! Gstonk is a work in progress. Some things are still subject to change.**
-Also, not everything is properly tested.
+**IMPORTANT! Gstonk retired, since I had to realize, there are much better alternatives out there. It served as a great experience, though.**
 
 ## Installation
 
